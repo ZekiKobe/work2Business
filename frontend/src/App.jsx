@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import Dashboard from "./pages/Dashboard";
-import Recommendations from "./pages/Recommendation";
-import BusinessPlans from "./pages/BusinessPlans";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Recommendations from "./pages/recommendations/Recommendation";
+import BusinessPlans from "./pages/plans/PlanDetails";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 

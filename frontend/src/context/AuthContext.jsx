@@ -1,21 +1,57 @@
-import { createContext, useState } from "react";
+import {
+  createContext,
+  useState,
+  useEffect
+} from "react";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
-    const [ user, setUser ] = useState(null);
 
-    const login = (data) => {
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
-    };
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    const logout = () => {
-        localStorage.removeItem("token");
-        setUser(null);
-    };
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
 
-    return <AuthContext.Provider value={{ user, login, logout}}>
-        {children}
+    try {
+      if (token && userData && userData !== "undefined") {
+        setUser(JSON.parse(userData));
+      }
+    } catch (err) {
+      console.error("Invalid user in localStorage");
+
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+
+      setUser(null);
+    }
+
+    setLoading(false);
+  }, []);
+
+  const login = (data) => {
+    localStorage.setItem("token", data.token);
+
+    if (data.user) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setUser(data.user);
+    } else {
+      localStorage.removeItem("user");
+      setUser(null);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
     </AuthContext.Provider>
+  );
 }
