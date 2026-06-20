@@ -1,50 +1,203 @@
-import { useState, useContext } from "react";
+import {
+  useState,
+  useContext
+} from "react";
+
+import {
+  Link,
+  useNavigate
+} from "react-router-dom";
+
+import toast from "react-hot-toast";
+
+import AuthLayout from "../../layouts/AuthLayout";
+
+import Card from "../../components/ui/Card";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
+import PasswordInput from "../../components/ui/PasswordInput";
+
 import api from "../../api/axios";
-import { AuthContext } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+
+import {
+  AuthContext
+} from "../../context/AuthContext";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const handleLogin = async () => {
-    const res = await api.post("/auth/login", {
-      email,
-      password,
+  const { login } =
+    useContext(AuthContext);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [formData, setFormData] =
+    useState({
+      email: "",
+      password: ""
     });
 
-    login(res.data);
-    navigate("/");
-  };
+  const handleSubmit =
+    async (e) => {
+      e.preventDefault();
+
+      try {
+        setLoading(true);
+
+        const response =
+          await api.post(
+            "/auth/login",
+            formData
+          );
+
+        login(response.data);
+
+        toast.success(
+          "Welcome back!"
+        );
+
+        navigate("/");
+      } catch (error) {
+        toast.error(
+          error.response?.data
+            ?.message ||
+            "Login failed"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="p-6 shadow-lg w-80">
-        <h2 className="text-xl mb-4">Login</h2>
+    <AuthLayout>
 
-        <input
-          className="border p-2 w-full mb-2"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <Card className="space-y-6">
 
-        <input
-          className="border p-2 w-full mb-2"
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div>
 
-        <button
-          onClick={handleLogin}
-          className="bg-blue-500 text-white w-full p-2"
+          <h1
+            className="
+            text-3xl
+            font-bold
+          "
+          >
+            Welcome Back
+          </h1>
+
+          <p
+            className="
+            text-gray-500
+            mt-2
+          "
+          >
+            Login to continue
+          </p>
+
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
         >
-          Login
-        </button>
-      </div>
-    </div>
+
+          <Input
+            label="Email"
+            type="email"
+            value={
+              formData.email
+            }
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                email:
+                  e.target.value
+              })
+            }
+          />
+
+          <PasswordInput
+            label="Password"
+            value={
+              formData.password
+            }
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                password:
+                  e.target.value
+              })
+            }
+          />
+
+          <div
+            className="
+            flex
+            justify-between
+            items-center
+            "
+          >
+
+            <label
+              className="
+              flex
+              items-center
+              gap-2
+              "
+            >
+              <input
+                type="checkbox"
+              />
+
+              Remember Me
+            </label>
+
+            <button
+              type="button"
+              className="
+              text-blue-600
+              "
+            >
+              Forgot Password?
+            </button>
+
+          </div>
+
+          <Button
+            type="submit"
+            loading={loading}
+            className="w-full"
+          >
+            Login
+          </Button>
+
+        </form>
+
+        <div
+          className="
+          text-center
+          text-sm
+          "
+        >
+
+          Don't have an account?
+
+          <Link
+            to="/register"
+            className="
+            text-blue-600
+            ml-2
+            "
+          >
+            Register
+          </Link>
+
+        </div>
+
+      </Card>
+
+    </AuthLayout>
   );
 }
