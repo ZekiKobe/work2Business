@@ -6,9 +6,14 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 
-const authRoutes = require('./routes/authRoute');
+const errorHandler = require('./middlewares/errorMiddleware');
 
-connectDB();
+const authRoutes = require('./routes/authRoute');
+const userRoutes = require('./routes/userRoute');
+const businessIdeaRoutes = require('./routes/businessIdeaRoutes');
+const recommendationRoutes = require('./routes/recommendationRoutes');
+const businessPlanRoutes = require('./routes/businessPlanRoute');
+
 
 const app = express();
 
@@ -16,6 +21,7 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
+
 
 app.get('/', (req, res) => {
     res.json({ 
@@ -25,7 +31,11 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/business-ideas', businessIdeaRoutes);
+app.use('/api/v1/recommendations', recommendationRoutes);
+app.use('/api/v1/business-plans',businessPlanRoutes);
 
-app.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
-});
+app.use(errorHandler);
+
+module.exports = app;

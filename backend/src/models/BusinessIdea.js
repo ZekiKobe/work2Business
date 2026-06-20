@@ -5,7 +5,7 @@ const businessIdeaSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    description: string,
+    description: String,
     minimumCapital:Number,
     expectedProfit:Number,
 
