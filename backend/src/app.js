@@ -6,6 +6,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 
+const authRoutes = require('./routes/authRoute');
+
 connectDB();
 
 const app = express();
@@ -21,6 +23,8 @@ app.get('/', (req, res) => {
         message: 'Work2Business API Running' 
     });
 });
+
+app.use('/api/v1/auth', authRoutes);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server running on port ${process.env.PORT}`);
