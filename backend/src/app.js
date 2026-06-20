@@ -6,10 +6,12 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 
+const errorHandler = require('./middlewares/errorMiddleware');
+
 const authRoutes = require('./routes/authRoute');
 const userRoutes = require('./routes/userRoute');
+const businessIdeaRoutes = require('./routes/businessIdeaRoutes');
 
-connectDB();
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
+
 
 app.get('/', (req, res) => {
     res.json({ 
@@ -27,5 +30,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/business-ideas', businessIdeaRoutes);
+
+app.use(errorHandler);
 
 module.exports = app;
