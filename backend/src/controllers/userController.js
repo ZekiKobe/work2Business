@@ -14,3 +14,25 @@ exports.getUserProfile = async (req, res) => {
         });
     }
 }
+
+exports.getUserProfile = async (req, res) => {
+    try {
+        const { profession, employer, monthlySalary, availableCapital, skills} = req.body;
+        
+        const user = await User.findByIdAndUpdate(req.user._id, {
+            profession,
+            employer,
+            monthlySalary,
+            availableCapital,
+            skills
+        }, {
+            new: true
+        });
+        res.status(200).json({
+            success: true,
+            user
+        });
+    } catch (error) {
+        
+    }
+}
