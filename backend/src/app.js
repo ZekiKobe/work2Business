@@ -11,6 +11,7 @@ const errorHandler = require('./middlewares/errorMiddleware');
 const authRoutes = require('./routes/authRoute');
 const userRoutes = require('./routes/userRoute');
 const businessIdeaRoutes = require('./routes/businessIdeaRoutes');
+const recommendationRoutes = require('./routes/recommendationRoutes');
 
 
 const app = express();
@@ -31,6 +32,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/business-ideas', businessIdeaRoutes);
+app.use('/api/v1/recommendations', recommendationRoutes);
 
 app.use(errorHandler);
 
