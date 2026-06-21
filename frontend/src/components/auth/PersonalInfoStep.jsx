@@ -10,6 +10,7 @@ export default function PersonalInfoStep({
 
       <Input
         label="First Name"
+        placeholder="John"
         value={formData.firstName}
         onChange={(e) =>
           setFormData({
@@ -17,10 +18,12 @@ export default function PersonalInfoStep({
             firstName: e.target.value
           })
         }
+        className="w-full transition duration-200 bg-slate-900 border-slate-800 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500/30"
       />
 
       <Input
         label="Last Name"
+        placeholder="Doe"
         value={formData.lastName}
         onChange={(e) =>
           setFormData({
@@ -28,10 +31,13 @@ export default function PersonalInfoStep({
             lastName: e.target.value
           })
         }
+        className="w-full transition duration-200 bg-slate-900 border-slate-800 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500/30"
       />
 
       <Input
         label="Email"
+        type="email"
+        placeholder="name@company.com"
         value={formData.email}
         onChange={(e) =>
           setFormData({
@@ -39,11 +45,13 @@ export default function PersonalInfoStep({
             email: e.target.value
           })
         }
+        className="w-full transition duration-200 bg-slate-900 border-slate-800 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500/30"
       />
 
       <Input
         type="password"
         label="Password"
+        placeholder="••••••••"
         value={formData.password}
         onChange={(e) =>
           setFormData({
@@ -51,6 +59,7 @@ export default function PersonalInfoStep({
             password: e.target.value
           })
         }
+        className="w-full transition duration-200 bg-slate-900 border-slate-800 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500/30"
       />
 
     </div>
