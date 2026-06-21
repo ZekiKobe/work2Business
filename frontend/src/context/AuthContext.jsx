@@ -1,46 +1,62 @@
-/* eslint-disable react-refresh/only-export-components */
-import {
-  createContext,
-  useState
-} from "react";
+import { createContext, useEffect, useState } from "react";
 
-export const AuthContext = createContext();
+export const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [user, setUser] = useState(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+  useEffect(() => {
+    let isMounted = true;
 
-    if (!token || !userData || userData === "undefined") {
-      return null;
-    }
+    const initAuth = () => {
+      try {
+        const token = localStorage.getItem("token");
+        const userData = localStorage.getItem("user");
 
-    try {
-      return JSON.parse(userData);
-    } catch {
-      console.error("Invalid user in localStorage");
+        if (!token || !userData || userData === "undefined") {
+          if (isMounted) setUser(null);
+          return;
+        }
 
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+        const parsedUser = JSON.parse(userData);
 
-      return null;
-    }
-  });
-  const [loading] = useState(false);
+        if (isMounted) {
+          setUser(parsedUser);
+        }
 
+      } catch (err) {
+        console.error("Auth parse error:", err);
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        if (isMounted) setUser(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 🔐 LOGIN
   const login = (data) => {
-    localStorage.setItem("token", data.token);
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
+    }
 
-    if (data.user) {
+    if (data?.user) {
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
-    } else {
-      localStorage.removeItem("user");
-      setUser(null);
     }
   };
 
+  // 🚪 LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

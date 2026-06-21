@@ -1,11 +1,19 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
-export default function ProtectedRoute ({ children }) {
-    const token = localStorage.getItem("token");
+export default function ProtectedRoute({ children }) {
+  const { user, loading } = useContext(AuthContext);
 
-    if(!token) {
-        return <Navigate to="/login" />
-    }
+  // ⏳ wait until auth is ready
+  if (loading) {
+    return <div className="p-10">Loading...</div>;
+  }
 
-    return children;
+  // 🔒 block unauthenticated users
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
