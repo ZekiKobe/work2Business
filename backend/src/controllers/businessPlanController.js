@@ -81,4 +81,21 @@ exports.getPlanById = async (req, res) => {
         })
         
     };
+};
+
+exports.deletePlan = async (req, res) => {
+    try {
+        await BusinessPlan.findByIdAndDelete(req.params.id);
+        res.status(200).json({
+            success: true,
+            message: "plan deleted"
+        })
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            success: false,
+            message: " Failed to delete Plan"
+        })
+    }
 }
