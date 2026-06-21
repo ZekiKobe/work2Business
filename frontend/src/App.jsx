@@ -4,21 +4,30 @@ import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 
 // Pages
+import Landing from "./pages/LandingPage/LandingPage";
+
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPaasword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 import Dashboard from "./pages/dashboard/Dashboard";
 import Recommendations from "./pages/recommendations/Recommendation";
 import Plans from "./pages/plans/plans";
 import PlanDetails from "./pages/plans/PlanDetails";
+import Profile from "./pages/profile/Profile";
 
-// =========================
-// 🔐 Protected Route Wrapper
-// =========================
+// ================= PROTECTED ROUTE =================
 function PrivateRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="p-10">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400 font-sans">
+        Loading...
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -27,16 +36,20 @@ function PrivateRoute({ children }) {
   return children;
 }
 
-// =========================
-// 🚪 Public Route Wrapper
-// =========================
+// ================= PUBLIC ROUTE =================
 function PublicRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="p-10">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400 font-sans">
+        Loading...
+      </div>
+    );
+  }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -45,10 +58,12 @@ function PublicRoute({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
-        {/* ================= PUBLIC ROUTES ================= */}
+        {/* ================= LANDING (FIRST PAGE) ================= */}
+        <Route path="/" element={<Landing />} />
+
+        {/* ================= AUTH ================= */}
         <Route
           path="/login"
           element={
@@ -67,9 +82,27 @@ export default function App() {
           }
         />
 
-        {/* ================= PRIVATE ROUTES ================= */}
         <Route
-          path="/"
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPassword />
+            </PublicRoute>
+          }
+        />
+
+        {/* ================= APP (PROTECTED) ================= */}
+        <Route
+          path="/dashboard"
           element={
             <PrivateRoute>
               <Dashboard />
@@ -104,11 +137,19 @@ export default function App() {
           }
         />
 
-        {/* ================= FALLBACK ================= */}
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
-
     </BrowserRouter>
   );
 }

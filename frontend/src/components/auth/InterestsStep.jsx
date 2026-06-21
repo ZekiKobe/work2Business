@@ -5,29 +5,18 @@ export default function InterestsStep({
   setFormData
 }) {
 
-  const toggleInterest = (
-    interest
-  ) => {
-    const exists =
-      formData.interests.includes(
-        interest
-      );
+  const toggleInterest = (interest) => {
+    const exists = formData.interests.includes(interest);
 
     if (exists) {
       setFormData({
         ...formData,
-        interests:
-          formData.interests.filter(
-            i => i !== interest
-          )
+        interests: formData.interests.filter(i => i !== interest)
       });
     } else {
       setFormData({
         ...formData,
-        interests: [
-          ...formData.interests,
-          interest
-        ]
+        interests: [...formData.interests, interest]
       });
     }
   };
@@ -35,40 +24,41 @@ export default function InterestsStep({
   return (
     <div>
 
-      <h2 className="text-2xl font-bold mb-2">
+      <h2 className="text-2xl font-bold tracking-tight text-white mb-6">
         Business Interests
       </h2>
 
       <div className="grid grid-cols-2 gap-4">
 
-        {INTERESTS.map(interest => (
+        {INTERESTS.map(interest => {
+          const isSelected = formData.interests.includes(interest);
 
-          <div
-            key={interest}
-            onClick={() =>
-              toggleInterest(
-                interest
-              )
-            }
-            className={`
-              cursor-pointer
-              p-4
-              rounded-xl
-              border
-
-              ${
-                formData.interests.includes(
-                  interest
-                )
-                  ? "bg-blue-50 border-blue-600"
-                  : "bg-white"
-              }
-            `}
-          >
-            {interest}
-          </div>
-
-        ))}
+          return (
+            <div
+              key={interest}
+              onClick={() => toggleInterest(interest)}
+              className={`
+                cursor-pointer
+                p-4
+                rounded-xl
+                border
+                text-sm
+                font-medium
+                transition-all
+                duration-150
+                select-none
+                active:scale-[0.98]
+                ${
+                  isSelected
+                    ? "bg-indigo-600/10 border-indigo-500 text-white shadow-lg shadow-indigo-500/5"
+                    : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                }
+              `}
+            >
+              {interest}
+            </div>
+          );
+        })}
 
       </div>
 

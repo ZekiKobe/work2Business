@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 const menu = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -15,7 +18,10 @@ const menu = [
   { name: "Profile", icon: User, path: "/profile" }
 ];
 
+
 export default function Sidebar() {
+  const { logout } = useContext(AuthContext);
+const navigate = useNavigate();
   return (
     <aside
       className="
@@ -79,20 +85,24 @@ export default function Sidebar() {
 
       {/* FOOTER */}
       <div className="p-4 border-t bg-gray-50">
-        <button
-          className="
-            flex items-center gap-3
-            w-full px-4 py-3
-            rounded-xl
-            text-red-500
-            hover:bg-red-50
-            transition
-            font-medium
-          "
-        >
-          <LogOut size={18} />
-          Logout
-        </button>
+<button
+  onClick={() => {
+    logout();
+    navigate("/login");
+  }}
+  className="
+    flex items-center gap-3
+    w-full px-4 py-3
+    rounded-xl
+    text-red-500
+    hover:bg-red-50
+    transition
+    font-medium
+  "
+>
+  <LogOut size={18} />
+  Logout
+</button>
 
         <p className="text-xs text-gray-400 mt-3 text-center">
           v1.0.0 • AI Business Suite

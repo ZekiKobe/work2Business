@@ -178,7 +178,7 @@ export default function Plans() {
               <div className="flex gap-2 md:justify-end">
 
                 <a
-                  href={`/dashboard/plans/${plan._id}`}
+                  href={`/plans/${plan._id}`}
                   className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-100"
                 >
                   View
