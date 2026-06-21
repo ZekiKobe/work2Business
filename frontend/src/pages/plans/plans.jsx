@@ -15,7 +15,7 @@ export default function Plans() {
     try {
       setLoading(true);
 
-      const res = await api.get("/plans");
+      const res = await api.get("/business-plans");
 
       setPlans(res.data.data);
 
@@ -32,7 +32,7 @@ export default function Plans() {
 
   const deletePlan = async (id) => {
     try {
-      await api.delete(`/plans/${id}`);
+      await api.delete(`/business-plans/${id}`);
 
       toast.success("Plan deleted");
 

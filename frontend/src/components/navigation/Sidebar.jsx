@@ -3,7 +3,7 @@ import {
   Briefcase,
   FileText,
   User,
-//   Settings,
+  Settings,
   LogOut
 } from "lucide-react";
 
