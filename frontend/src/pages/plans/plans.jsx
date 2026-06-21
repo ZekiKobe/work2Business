@@ -11,23 +11,30 @@ export default function Plans() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPlans = async () => {
-    try {
-      setLoading(true);
-
-      const res = await api.get("/business-plans");
-
-      setPlans(res.data.data);
-
-    } catch (err) {
-      toast.error("Failed to load plans");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchPlans();
+    let mounted = true;
+
+    const loadPlans = async () => {
+      try {
+        if (!mounted) return;
+        setLoading(true);
+
+        const res = await api.get("/business-plans");
+
+        if (!mounted) return;
+        setPlans(res.data.data);
+
+      } catch {
+        if (mounted) toast.error("Failed to load plans");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    // call asynchronously inside effect body
+    loadPlans();
+
+    return () => { mounted = false; };
   }, []);
 
   const deletePlan = async (id) => {
@@ -40,7 +47,7 @@ export default function Plans() {
         plans.filter(p => p._id !== id)
       );
 
-    } catch (err) {
+    } catch {
       toast.error("Delete failed");
     }
   };

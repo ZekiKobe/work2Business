@@ -1,39 +1,18 @@
-import DashboardLayout
-from "../../layouts/DashboardLayout";
+import DashboardLayout from "../../layouts/DashboardLayout";
 
-import StatCard
-from "../../components/dashboard/StatCard";
+import PageHeader from "../../components/common/PageHeader";
+import AnalyticsChart from "../../components/dashboard/AnalyticsChart";
+import StatCard from "../../components/dashboard/StatCard";
 
 export default function Dashboard() {
 
   return (
     <DashboardLayout>
 
-      <div
-        className="
-        mb-8
-        "
-      >
-
-        <h1
-          className="
-          text-3xl
-          font-bold
-          "
-        >
-          Dashboard
-        </h1>
-
-        <p
-          className="
-          text-gray-500
-          mt-2
-          "
-        >
-          Welcome back
-        </p>
-
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Monitor your entrepreneurial journey"
+      />
 
       <div
         className="
@@ -46,7 +25,7 @@ export default function Dashboard() {
       >
 
         <StatCard
-          title="Business Match Score"
+          title="Match Score"
           value="87%"
           subtitle="Excellent"
         />
@@ -58,98 +37,21 @@ export default function Dashboard() {
         />
 
         <StatCard
-          title="Business Plans"
+          title="Plans"
           value="5"
           subtitle="Generated"
         />
 
         <StatCard
-          title="Funding Readiness"
-          value="78%"
-          subtitle="Good"
+          title="Capital Readiness"
+          value="$10,000"
+          subtitle="Available"
         />
 
       </div>
 
-      <div
-        className="
-        grid
-        lg:grid-cols-2
-        gap-6
-        mt-8
-        "
-      >
-
-        <div
-          className="
-          bg-white
-          rounded-2xl
-          border
-          p-6
-          "
-        >
-
-          <h2
-            className="
-            font-bold
-            text-lg
-            mb-4
-            "
-          >
-            Top Recommendations
-          </h2>
-
-          <div className="space-y-4">
-
-            <div className="p-4 border rounded-xl">
-              Data Analytics Consultancy
-            </div>
-
-            <div className="p-4 border rounded-xl">
-              Online Training Center
-            </div>
-
-            <div className="p-4 border rounded-xl">
-              Digital Marketing Agency
-            </div>
-
-          </div>
-
-        </div>
-
-        <div
-          className="
-          bg-white
-          rounded-2xl
-          border
-          p-6
-          "
-        >
-
-          <h2
-            className="
-            font-bold
-            text-lg
-            mb-4
-            "
-          >
-            Recent Business Plans
-          </h2>
-
-          <div className="space-y-4">
-
-            <div className="p-4 border rounded-xl">
-              Data Analytics Consultancy
-            </div>
-
-            <div className="p-4 border rounded-xl">
-              Online Training Center
-            </div>
-
-          </div>
-
-        </div>
-
+      <div className="mt-8">
+        <AnalyticsChart />
       </div>
 
     </DashboardLayout>
