@@ -29,7 +29,7 @@ export default function PlanDetails() {
         }
       } catch {
         if (isMounted) {
-          toast.error("Failed to load plan");
+          toast.error("Failed to load plan structure");
         }
       } finally {
         if (isMounted) {
@@ -45,14 +45,14 @@ export default function PlanDetails() {
     };
   }, [id]);
 
-  // ✅ CLEAN RECURSIVE RENDERER (FIXED)
+  // ✅ DARK MODE RECURSIVE RENDERER
   const renderContent = (data) => {
     if (data === null || data === undefined) return null;
 
     // STRING
     if (typeof data === "string") {
       return (
-        <p className="text-gray-700 whitespace-pre-wrap">
+        <p className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
           {data}
         </p>
       );
@@ -61,8 +61,8 @@ export default function PlanDetails() {
     // NUMBER
     if (typeof data === "number") {
       return (
-        <span className="text-gray-900 font-bold text-lg">
-          {data}
+        <span className="text-blue-400 font-mono font-bold text-lg">
+          {data.toLocaleString()}
         </span>
       );
     }
@@ -70,16 +70,16 @@ export default function PlanDetails() {
     // ARRAY
     if (Array.isArray(data)) {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 w-full">
           {data.map((item, i) => (
             <div
               key={i}
-              className="p-3 border rounded-lg bg-gray-50"
+              className="p-4 border border-slate-800/60 bg-slate-900/30 rounded-xl"
             >
               {typeof item === "object"
                 ? renderContent(item)
                 : (
-                  <p className="text-gray-700">
+                  <p className="text-slate-300 text-sm leading-relaxed">
                     {item}
                   </p>
                 )}
@@ -92,17 +92,17 @@ export default function PlanDetails() {
     // OBJECT
     if (typeof data === "object") {
       return (
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
           {Object.entries(data).map(([key, value]) => (
             <div
               key={key}
-              className="p-4 bg-gray-50 rounded-xl border"
+              className="p-4 bg-slate-900/50 rounded-xl border border-slate-900 flex flex-col gap-1.5"
             >
-              <p className="text-sm text-gray-500 capitalize mb-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 capitalize">
                 {key.replace(/([A-Z])/g, " $1")}
               </p>
 
-              <div className="text-gray-800">
+              <div className="text-slate-200">
                 {renderContent(value)}
               </div>
             </div>
@@ -118,7 +118,12 @@ export default function PlanDetails() {
   if (loading) {
     return (
       <DashboardLayout>
-        <p className="p-6">Loading...</p>
+        <div className="min-h-screen bg-slate-950 text-slate-400 p-6 flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-blue-500 animate-ping" />
+            <span className="text-sm font-medium tracking-wide">Compiling blueprint data...</span>
+          </div>
+        </div>
       </DashboardLayout>
     );
   }
@@ -127,69 +132,73 @@ export default function PlanDetails() {
   if (!plan) {
     return (
       <DashboardLayout>
-        <p className="p-6 text-gray-500">Plan not found</p>
+        <div className="min-h-screen bg-slate-950 text-slate-500 p-6 flex flex-col items-center justify-center">
+          <p className="text-sm font-medium">Venture blueprint map code signature not found</p>
+        </div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">
-          {plan.title}
-        </h1>
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-1">
+        
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            {plan.title || "Untitled Venture Strategy"}
+          </h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-400 mt-2">
+            E2B Strategic Transition Blueprint Asset
+          </p>
+        </div>
 
-        <p className="text-gray-500 mt-1">
-          AI Generated Business Plan
-        </p>
-      </div>
+        {/* SECTIONS */}
+        <div className="space-y-6 max-w-6xl">
 
-      {/* SECTIONS */}
-      <div className="space-y-6">
+          <Card className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+            <h2 className="text-base font-bold text-white mb-4 tracking-tight border-b border-slate-900 pb-3">
+              Executive Summary
+            </h2>
+            {renderContent(plan.executiveSummary)}
+          </Card>
 
-        <Card>
-          <h2 className="text-lg font-bold mb-3">
-            Executive Summary
-          </h2>
-          {renderContent(plan.executiveSummary)}
-        </Card>
+          <Card className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+            <h2 className="text-base font-bold text-white mb-4 tracking-tight border-b border-slate-900 pb-3">
+              Market Analysis & Target Gaps
+            </h2>
+            {renderContent(plan.marketAnalysis)}
+          </Card>
 
-        <Card>
-          <h2 className="text-lg font-bold mb-3">
-            Market Analysis
-          </h2>
-          {renderContent(plan.marketAnalysis)}
-        </Card>
+          <Card className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+            <h2 className="text-base font-bold text-white mb-4 tracking-tight border-b border-slate-900 pb-3">
+              Business Model Engine
+            </h2>
+            {renderContent(plan.businessModel)}
+          </Card>
 
-        <Card>
-          <h2 className="text-lg font-bold mb-3">
-            Business Model
-          </h2>
-          {renderContent(plan.businessModel)}
-        </Card>
+          <Card className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+            <h2 className="text-base font-bold text-white mb-4 tracking-tight border-b border-slate-900 pb-3">
+              Marketing & User Acquisition Strategy
+            </h2>
+            {renderContent(plan.marketingStrategy)}
+          </Card>
 
-        <Card>
-          <h2 className="text-lg font-bold mb-3">
-            Marketing Strategy
-          </h2>
-          {renderContent(plan.marketingStrategy)}
-        </Card>
+          <Card className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+            <h2 className="text-base font-bold text-white mb-4 tracking-tight border-b border-slate-900 pb-3">
+              Financial Modeling & Projections
+            </h2>
+            {renderContent(plan.financialPlan)}
+          </Card>
 
-        <Card>
-          <h2 className="text-lg font-bold mb-3">
-            Financial Plan
-          </h2>
-          {renderContent(plan.financialPlan)}
-        </Card>
+          <Card className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+            <h2 className="text-base font-bold text-white mb-4 tracking-tight border-b border-slate-900 pb-3">
+              Risk Mitigation & Feasibility Metrics
+            </h2>
+            {renderContent(plan.riskAnalysis)}
+          </Card>
 
-        <Card>
-          <h2 className="text-lg font-bold mb-3">
-            Risk Analysis
-          </h2>
-          {renderContent(plan.riskAnalysis)}
-        </Card>
-
+        </div>
       </div>
     </DashboardLayout>
   );

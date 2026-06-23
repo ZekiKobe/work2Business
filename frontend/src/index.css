@@ -1,3 +1,15 @@
+/* index.css or globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100;
+    min-height: 100vh;
+  }
+  
+  html {
+    @apply bg-slate-950;
+  }
+}

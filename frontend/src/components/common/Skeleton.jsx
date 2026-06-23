@@ -6,7 +6,8 @@ export default function Skeleton({
       className={`
       animate-pulse
       rounded-xl
-      bg-slate-200
+      bg-slate-900/60
+      border border-slate-900/30
       ${className}
       `}
     />
