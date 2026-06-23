@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react"; // Imported crisp navigation back icon
 import toast from "react-hot-toast";
 
 import { AuthContext } from "../../context/AuthContext";
@@ -115,8 +116,20 @@ export default function Login() {
       </div>
 
       {/* RIGHT SIDE - CLEAN, MINIMALIST LOGIN FORM */}
-      <div className="w-full lg:w-[55%] flex items-center justify-center bg-slate-900/40 px-6 sm:px-12 lg:px-20">
+      <div className="w-full lg:w-[55%] flex items-center justify-center bg-slate-900/40 px-6 sm:px-12 lg:px-20 relative">
+        
         <div className="w-full max-w-[440px] py-12">
+          
+          {/* BACK NAVIGATION ACTION BUTTON */}
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase text-slate-500 hover:text-slate-200 mb-8 px-3 py-2 border border-slate-900 bg-slate-950/40 rounded-xl transition-all duration-150 select-none group"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform duration-150" />
+            Back
+          </button>
+
           {/* Header Area */}
           <div className="mb-9 text-left">
             {/* Mobile-only logo visibility */}

@@ -5,10 +5,10 @@ export default function Card({
   return (
     <div
       className={`
-      bg-slate-900/40
+      bg-slate-900/60
       backdrop-blur-md
       border
-      border-slate-900/80
+      border-slate-800/80
       rounded-2xl
       shadow-xl
       p-6

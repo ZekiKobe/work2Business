@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import PageHeader from "../../components/PageHeader"; // Adjust based on your folder structure
-import Card from "../../components/Card";             // Adjust based on your folder structure
+import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
 
@@ -22,7 +21,6 @@ export default function Profile() {
     interests: "",
   });
 
-  // Fetch data matching your Mongoose schema exactly
   useEffect(() => {
     let isMounted = true;
     const fetchProfile = async () => {
@@ -61,17 +59,13 @@ export default function Profile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setSaving(true);
-
       const payload = {
         ...formData,
         monthlySalary: Number(formData.monthlySalary) || 0,
@@ -93,13 +87,17 @@ export default function Profile() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 pb-12 text-slate-100">
         
-        {/* Consuming unified PageHeader component */}
-        <PageHeader 
-          title="Account Settings" 
-          subtitle="Update your professional snapshot, resources, and expert skill alignments for the E2B matching core." 
-        />
+        {/* Page Title */}
+        <div className="mb-8 border-b border-slate-900 pb-5">
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Account Settings
+          </h1>
+          <p className="mt-2 text-sm text-slate-400">
+            Update your professional snapshot, resources, and expert skill alignments for the E2B matching core.
+          </p>
+        </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -109,8 +107,8 @@ export default function Profile() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-8">
             
-            {/* Section 1: Basic Identity Wrapped inside modular Card primitive */}
-            <Card>
+            {/* Section 1: Basic Identity (Using explicit raw styled div container) */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl shadow-xl p-6 backdrop-blur-md">
               <h2 className="text-base font-bold text-white mb-4 tracking-tight">Identity Details</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -122,7 +120,7 @@ export default function Profile() {
                     value={formData.firstName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 placeholder-slate-600 transition-all"
                   />
                 </div>
 
@@ -134,7 +132,7 @@ export default function Profile() {
                     value={formData.lastName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 placeholder-slate-600 transition-all"
                   />
                 </div>
 
@@ -145,14 +143,14 @@ export default function Profile() {
                     name="email"
                     value={formData.email}
                     disabled
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-900/40 text-slate-500 rounded-xl text-sm cursor-not-allowed opacity-60"
+                    className="w-full px-4 py-2.5 bg-slate-900/40 border border-slate-800/60 text-slate-500 rounded-xl text-sm cursor-not-allowed opacity-60"
                   />
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Section 2: Profession & Logistics */}
-            <Card>
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl shadow-xl p-6 backdrop-blur-md">
               <h2 className="text-base font-bold text-white mb-4 tracking-tight">Professional Baseline</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -164,7 +162,7 @@ export default function Profile() {
                     value={formData.profession}
                     onChange={handleChange}
                     placeholder="e.g. Software Engineer"
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 placeholder-slate-600 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 placeholder-slate-600 transition-all"
                   />
                 </div>
 
@@ -176,7 +174,7 @@ export default function Profile() {
                     value={formData.employer}
                     onChange={handleChange}
                     placeholder="e.g. Acme Corp"
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 placeholder-slate-600 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 placeholder-slate-600 transition-all"
                   />
                 </div>
 
@@ -187,18 +185,18 @@ export default function Profile() {
                     name="monthlySalary"
                     value={formData.monthlySalary}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Available Venture Capital</label>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Available Capital for Ventures</label>
                   <input
                     type="number"
                     name="availableCapital"
                     value={formData.availableCapital}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 transition-all"
                   />
                 </div>
 
@@ -209,14 +207,14 @@ export default function Profile() {
                     name="availableHoursPerWeek"
                     value={formData.availableHoursPerWeek}
                     onChange={handleChange}
-                    className="w-full md:w-1/2 px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 transition-all"
+                    className="w-full md:w-1/2 px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 transition-all"
                   />
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Section 3: AI Engine Attributes */}
-            <Card>
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl shadow-xl p-6 backdrop-blur-md">
               <h2 className="text-base font-bold text-white mb-1 tracking-tight">AI Engine Parameters</h2>
               <p className="text-xs text-slate-500 mb-4">Separate individual items using commas to maximize professional mapping density.</p>
               
@@ -229,7 +227,7 @@ export default function Profile() {
                     value={formData.skills}
                     onChange={handleChange}
                     placeholder="React, Project Management, Sales, Copywriting"
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 placeholder-slate-600 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 placeholder-slate-600 transition-all"
                   />
                 </div>
 
@@ -241,11 +239,11 @@ export default function Profile() {
                     value={formData.interests}
                     onChange={handleChange}
                     placeholder="SaaS, E-commerce, Artificial Intelligence, Green Energy"
-                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 placeholder-slate-600 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-100 placeholder-slate-600 transition-all"
                   />
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Action Footer */}
             <div className="flex items-center justify-end space-x-4 pt-2">
