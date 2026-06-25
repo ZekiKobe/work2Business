@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -165,6 +165,127 @@ function SkillGapModal({ idea, onClose }) {
 
 // ─── AI Names Modal ───────────────────────────────────────────────────────────
 
+const NAME_GEN_STEPS = [
+  { label: "Reading your profile", duration: 1800 },
+  { label: "Brainstorming concepts", duration: 2400 },
+  { label: "Crafting brand names", duration: 2000 },
+  { label: "Selecting top 5", duration: 1400 },
+];
+
+function NamesGeneratingProgress() {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [barProgress, setBarProgress] = useState(0);
+  const totalDuration = NAME_GEN_STEPS.reduce((s, x) => s + x.duration, 0);
+
+  useEffect(() => {
+    let elapsed = 0;
+    const timers = [];
+
+    NAME_GEN_STEPS.forEach((step, i) => {
+      if (i > 0) {
+        const t = setTimeout(() => setStepIndex(i), elapsed);
+        timers.push(t);
+      }
+      elapsed += step.duration;
+    });
+
+    // Animate overall bar
+    const interval = 60;
+    const id = setInterval(() => {
+      setBarProgress(prev => {
+        const next = prev + (100 / (totalDuration / interval)) * 0.9;
+        return next >= 90 ? 90 : next;
+      });
+    }, interval);
+    timers.push(id);
+
+    return () => timers.forEach(t => { clearTimeout(t); clearInterval(t); });
+  }, [totalDuration]);
+
+  return (
+    <div className="py-2">
+      {/* Wand animation */}
+      <div className="flex justify-center mb-5">
+        <div className="relative w-14 h-14">
+          <div className="absolute inset-0 rounded-2xl bg-pink-500/10 border border-pink-500/20" />
+          <motion.div
+            animate={{ rotate: [0, 15, -15, 10, -10, 0] }}
+            transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <Wand2 className="w-6 h-6 text-pink-400" />
+          </motion.div>
+          {/* Sparkle dots */}
+          {[0, 72, 144, 216, 288].map((deg, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-pink-400"
+              style={{ top: "50%", left: "50%", transformOrigin: "0 0" }}
+              animate={{
+                x: [0, Math.cos((deg * Math.PI) / 180) * 24],
+                y: [0, Math.sin((deg * Math.PI) / 180) * 24],
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+              }}
+              transition={{ repeat: Infinity, duration: 1.6, delay: i * 0.18, ease: "easeOut" }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Overall progress bar */}
+      <div className="mb-5">
+        <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+          <span>Generating names</span>
+          <span className="font-bold text-pink-400">{Math.round(barProgress)}%</span>
+        </div>
+        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-pink-600 to-purple-500"
+            animate={{ width: `${barProgress}%` }}
+            transition={{ duration: 0.3, ease: "linear" }}
+          />
+        </div>
+      </div>
+
+      {/* Step list */}
+      <div className="space-y-2.5">
+        {NAME_GEN_STEPS.map((step, i) => {
+          const done = i < stepIndex;
+          const active = i === stepIndex;
+          return (
+            <div key={step.label} className={`flex items-center gap-2.5 transition-all duration-300 ${active || done ? "opacity-100" : "opacity-30"}`}>
+              {done ? (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-4 h-4 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-2.5 h-2.5 text-pink-400" />
+                </motion.div>
+              ) : active ? (
+                <motion.div animate={{ scale: [1, 1.25, 1] }} transition={{ repeat: Infinity, duration: 0.9 }}
+                  className="w-4 h-4 rounded-full bg-pink-500/15 border-2 border-pink-500 shrink-0" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-slate-700 shrink-0" />
+              )}
+              <span className={`text-xs font-medium ${done ? "line-through text-slate-600" : active ? "text-white" : "text-slate-600"}`}>
+                {step.label}
+              </span>
+              {active && (
+                <motion.span
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                  className="ml-auto text-[10px] text-pink-400 font-medium"
+                >
+                  working...
+                </motion.span>
+              )}
+              {done && <span className="ml-auto text-[10px] text-emerald-400 font-medium">done</span>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function NamesModal({ idea, onClose }) {
   const [names, setNames] = useState(null);
   const [copied, setCopied] = useState(null);
@@ -207,22 +328,24 @@ function NamesModal({ idea, onClose }) {
         </div>
 
         {!names ? (
+          isLoading ? (
+            <NamesGeneratingProgress />
+          ) : (
           <div className="text-center py-4">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Wand2 className="w-6 h-6 text-pink-400" />
+            </div>
             <p className="text-sm text-slate-400 mb-5 leading-relaxed">
               AI will generate 5 unique, brandable business names tailored to this idea and your background.
             </p>
             <button
               onClick={() => generate()}
-              disabled={isLoading}
               className="btn-primary w-full justify-center"
             >
-              {isLoading ? (
-                <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Generating names...</>
-              ) : (
-                <><Wand2 className="w-4 h-4" /> Generate 5 Names</>
-              )}
+              <Wand2 className="w-4 h-4" /> Generate 5 Names
             </button>
           </div>
+          )
         ) : (
           <>
             <div className="space-y-2.5 mb-4">
@@ -340,6 +463,166 @@ function CompareDrawer({ ideaA, ideaB, onClose }) {
             ))}
           </div>
         )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── Plan Generating Overlay ──────────────────────────────────────────────────
+
+const GENERATION_STEPS = [
+  { label: "Analyzing your profile", duration: 6000, color: "#6366f1" },
+  { label: "Researching the market", duration: 9000, color: "#8b5cf6" },
+  { label: "Writing your business plan", duration: 12000, color: "#10b981" },
+];
+
+function StepProgress({ label, color, isActive, isDone, startDelay }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isActive && !isDone) return;
+    if (isDone) { setProgress(100); return; }
+
+    const timer = setTimeout(() => {
+      const step = GENERATION_STEPS.find(s => s.label === label);
+      const duration = step?.duration || 8000;
+      const interval = 80;
+      const increment = (100 / (duration / interval)) * 0.92; // stop at ~92% while still running
+
+      const id = setInterval(() => {
+        setProgress(prev => {
+          const next = prev + increment;
+          if (next >= 92) { clearInterval(id); return 92; }
+          return next;
+        });
+      }, interval);
+
+      return () => clearInterval(id);
+    }, startDelay);
+
+    return () => clearTimeout(timer);
+  }, [isActive, isDone, label, startDelay]);
+
+  return (
+    <div className={`transition-all duration-300 ${isActive || isDone ? "opacity-100" : "opacity-35"}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-2">
+          {isDone ? (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-4 h-4 rounded-full flex items-center justify-center"
+              style={{ background: color + "25", border: `1px solid ${color}50` }}
+            >
+              <CheckCircle2 className="w-2.5 h-2.5" style={{ color }} />
+            </motion.div>
+          ) : isActive ? (
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 1.2 }}
+              className="w-4 h-4 rounded-full"
+              style={{ background: color + "30", border: `2px solid ${color}` }}
+            />
+          ) : (
+            <div className="w-4 h-4 rounded-full border border-slate-700" />
+          )}
+          <span className={`text-xs font-medium ${isDone ? "text-slate-400 line-through" : isActive ? "text-white" : "text-slate-600"}`}>
+            {label}
+          </span>
+        </div>
+        <span className={`text-[11px] font-bold tabular-nums ${isDone ? "text-emerald-400" : isActive ? "text-white" : "text-slate-700"}`}>
+          {Math.round(isDone ? 100 : progress)}%
+        </span>
+      </div>
+      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: `linear-gradient(90deg, ${color}99, ${color})` }}
+          initial={{ width: "0%" }}
+          animate={{ width: `${isDone ? 100 : progress}%` }}
+          transition={{ duration: 0.3, ease: "linear" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PlanGeneratingOverlay() {
+  const [activeStep, setActiveStep] = useState(0);
+  const [doneSteps, setDoneSteps] = useState(new Set());
+
+  useEffect(() => {
+    let elapsed = 0;
+    const timers = [];
+
+    GENERATION_STEPS.forEach((step, i) => {
+      // Advance to next step after this step's duration
+      if (i < GENERATION_STEPS.length - 1) {
+        const t = setTimeout(() => {
+          setDoneSteps(prev => new Set([...prev, i]));
+          setActiveStep(i + 1);
+        }, elapsed + step.duration);
+        timers.push(t);
+      }
+      elapsed += step.duration;
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#080d1a]/85 backdrop-blur-md"
+    >
+      <motion.div
+        initial={{ scale: 0.94, y: 16 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.94, y: 16 }}
+        transition={{ duration: 0.3 }}
+        className="glass rounded-2xl p-8 max-w-sm w-full mx-4"
+      >
+        {/* Icon */}
+        <div className="flex justify-center mb-5">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-2xl bg-indigo-500/15 border border-indigo-500/25" />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+              className="absolute inset-0 rounded-2xl border-2 border-transparent border-t-indigo-500"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Zap className="w-7 h-7 text-indigo-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-bold text-white">Generating your plan...</h3>
+          <p className="text-xs text-slate-500 mt-1">GPT-4o is writing a personalized plan for you</p>
+        </div>
+
+        {/* Steps */}
+        <div className="space-y-4">
+          {GENERATION_STEPS.map((step, i) => (
+            <StepProgress
+              key={step.label}
+              label={step.label}
+              color={step.color}
+              isActive={activeStep === i}
+              isDone={doneSteps.has(i)}
+              startDelay={0}
+            />
+          ))}
+        </div>
+
+        {/* Tip */}
+        <p className="text-center text-[11px] text-slate-600 mt-5">
+          Takes 15–30 seconds · You'll be taken to your plan when done
+        </p>
       </motion.div>
     </motion.div>
   );
@@ -688,26 +971,7 @@ export default function Recommendations() {
 
       {/* AI generation loading overlay */}
       <AnimatePresence>
-        {generatingId && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-[#080d1a]/80 backdrop-blur-sm">
-            <div className="glass rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-              <div className="w-16 h-16 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <Zap className="w-8 h-8 text-indigo-400 animate-pulse" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Generating your plan...</h3>
-              <p className="text-sm text-slate-400 leading-relaxed mb-5">AI is analyzing your profile and writing a personalized business plan. Takes 15–30 seconds.</p>
-              <div className="space-y-2">
-                {["Analyzing your profile", "Researching market", "Writing business plan"].map((step, i) => (
-                  <div key={step} className="flex items-center gap-2 text-xs text-slate-400">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
-                    {step}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {generatingId && <PlanGeneratingOverlay />}
       </AnimatePresence>
 
       {/* Modals */}
