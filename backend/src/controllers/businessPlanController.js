@@ -90,7 +90,7 @@ exports.getPlanById = async (req, res) => {
       });
     }
 
-    if (!isAdmin && !plan.isActive) {
+    if (!isAdmin && plan.isActive === false) {
       return res.status(404).json({
         success: false,
         message: "Plan not found"
