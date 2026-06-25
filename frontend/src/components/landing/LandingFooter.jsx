@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, Github, Twitter, Linkedin } from "lucide-react";
+import { Building2, Globe, Share2, ExternalLink } from "lucide-react";
 
 export default function LandingFooter() {
   const year = new Date().getFullYear();
@@ -77,9 +77,9 @@ export default function LandingFooter() {
           </p>
           <div className="flex gap-4">
             {[
-              { icon: Twitter, href: "#" },
-              { icon: Linkedin, href: "#" },
-              { icon: Github, href: "#" },
+              { icon: Globe, href: "#" },
+              { icon: Share2, href: "#" },
+              { icon: ExternalLink, href: "#" },
             ].map(({ icon: Icon, href }, i) => (
               <a key={i} href={href} className="p-2 text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
                 <Icon className="w-4 h-4" />
