@@ -1,59 +1,47 @@
 const BusinessIdea = require("../models/BusinessIdea");
-const { calculateScore } = require("../services/recommendationService");
+const User = require("../models/User");
+const { calculateScore, generateMatchReasons } = require("../services/recommendationService");
 
 exports.getRecommendations = async (req, res) => {
   try {
-    const ideas = await BusinessIdea.find();
-    const user = req.user; // Assuming user info is attached to the request
+    const ideas = await BusinessIdea.find({ isActive: true });
+    const user = await User.findById(req.user._id);
 
-    const rankedIdeas = ideas.map((idea) => {
-      const score = calculateScore(user, idea);
-      let reason = [];
+    const ranked = ideas.map((idea) => {
+      const { score, breakdown } = calculateScore(user, idea);
+      const reasons = generateMatchReasons(user, idea, breakdown);
 
-      if (user.availableCapital >= idea.minimumCapital) {
-        reason.push("Enough capital available");
-      } else {
-        reason.push("Capital is lower than expected");
-      }
-
-      const matchedSkills = idea.requiredSkills
-        .filter(skill => (user.skills || [])
-        .map(s => s.toLowerCase())
-        .includes(skill.toLowerCase()));
-
-        if(matchedSkills.length > 0) {
-            reason.push(`Skill match: ${matchedSkills.join(", ")}`);
-        } else {
-            reason.push("No strong skill match");
-        }
-
-        reason.push(`Risk Level: ${idea.riskLevel}`);
-
-        return {
-            id: idea._id,
-            name: idea.name,
-            category: idea.category,
-            minimumCapital: idea.minimumCapital,
-            expectedProfit: idea.expectedProfit,
-            riskLevel: idea.riskLevel,
-            score,
-            reason: reason.join(" | ")
-        }
+      return {
+        id: idea._id,
+        name: idea.name,
+        description: idea.description,
+        category: idea.category,
+        minimumCapital: idea.minimumCapital,
+        expectedProfit: idea.expectedProfit,
+        riskLevel: idea.riskLevel,
+        requiredSkills: idea.requiredSkills,
+        tags: idea.tags,
+        timeToProfit: idea.timeToProfit,
+        hoursRequiredPerWeek: idea.hoursRequiredPerWeek,
+        successRate: idea.successRate,
+        score,
+        breakdown,
+        reasons
+      };
     });
 
-    // SORT BY BEST MATCH
-    rankedIdeas.sort((a,b) => b.score - a.score);
+    ranked.sort((a, b) => b.score - a.score);
 
     res.json({
-        success: true,
-        count: rankedIdeas.lenght,
-        data: rankedIdeas
+      success: true,
+      count: ranked.length,
+      data: ranked
     });
   } catch (error) {
-    console.log(error);
+    console.error("Recommendations error:", error);
     res.status(500).json({
-        success: false,
-        message: error.message
+      success: false,
+      message: error.message
     });
   }
 };

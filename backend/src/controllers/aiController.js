@@ -1,45 +1,64 @@
 const BusinessIdea = require("../models/BusinessIdea");
 const BusinessPlan = require("../models/BusinessPlan");
+const User = require("../models/User");
 const { generateAIPlan } = require("../services/aiService");
-
-// BUSINESS PLAN GENERATOR
+const { generateBusinessPlan } = require("../services/businessPlanService");
 
 exports.generatePlan = async (req, res) => {
   try {
     const { ideaId } = req.body;
 
     const idea = await BusinessIdea.findById(ideaId);
-
     if (!idea) {
       return res.status(404).json({
-        sucess: false,
-        message: "Business idea not found",
+        success: false,
+        message: "Business idea not found"
       });
     }
 
-    const aiPlan = await generateAIPlan(req.user, idea);
+    const user = await User.findById(req.user._id);
+
+    let planData;
+    let source = "AI";
+
+    try {
+      planData = await generateAIPlan(user, idea);
+    } catch (aiError) {
+      console.warn("AI generation failed, falling back to rule-based:", aiError.message);
+      planData = generateBusinessPlan(user, idea);
+      source = "MANUAL";
+    }
 
     const savedPlan = await BusinessPlan.create({
       user: req.user._id,
       businessIdea: idea._id,
-      executiveSummary: aiPlan.executiveSummary,
-      marketAnalysis: aiPlan.marketAnalysis,
-      financialPlan: aiPlan.financialPlan,
-      marketingStrategy: aiPlan.marketingStrategy,
-      riskAnalysis: aiPlan.riskAnalysis,
-      projectedProfit: aiPlan.successProbability || 0,
+      title: planData.title || `${idea.name} — Business Plan`,
+      source,
+      executiveSummary: planData.executiveSummary,
+      marketAnalysis: planData.marketAnalysis,
+      businessModel: planData.businessModel,
+      financialPlan: planData.financialPlan,
+      marketingStrategy: planData.marketingStrategy,
+      operationalPlan: planData.operationalPlan,
+      riskAnalysis: planData.riskAnalysis,
+      initialCapital: user.availableCapital || 0,
+      projectedRevenue: planData.projectedRevenue || 0,
+      projectedProfit: planData.projectedProfit || 0,
+      successProbability: planData.successProbability || 0
     });
 
-    res.status(201).json({
-        sucess: true,
-        data: savedPlan
-    })
-  } catch (error) {
-    console.log(error);
+    const populated = await savedPlan.populate("businessIdea");
 
+    res.status(201).json({
+      success: true,
+      data: populated,
+      generatedBy: source
+    });
+  } catch (error) {
+    console.error("Generate plan error:", error);
     res.status(500).json({
-        sucess: false,
-        message: error.message
-    })
+      success: false,
+      message: error.message
+    });
   }
 };
