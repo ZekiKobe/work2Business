@@ -5,49 +5,83 @@ const businessPlanSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: true
     },
 
     businessIdea: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessIdea",
-      required: true,
+      required: true
+    },
+
+    title: {
+      type: String,
+      default: ""
+    },
+
+    source: {
+      type: String,
+      enum: ["AI", "MANUAL"],
+      default: "AI"
     },
 
     executiveSummary: {
-      type: String,
+      type: String
     },
 
     marketAnalysis: {
-      type: String,
+      type: String
+    },
+
+    businessModel: {
+      type: String
     },
 
     financialPlan: {
-      type: Object,   // ✅ FIXED (was String)
+      type: mongoose.Schema.Types.Mixed
     },
 
     marketingStrategy: {
-      type: String,
+      type: String
     },
 
     riskAnalysis: {
-      type: Object,   // ✅ FIXED (was String)
+      type: mongoose.Schema.Types.Mixed
+    },
+
+    operationalPlan: {
+      type: String
     },
 
     initialCapital: {
-      type: Number,   // (fixed typo also)
+      type: Number,
+      default: 0
     },
 
     projectedRevenue: {
       type: Number,
+      default: 0
     },
 
     projectedProfit: {
       type: Number,
+      default: 0
     },
+
+    successProbability: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true
+    }
   },
   {
-    timestamps: true,
+    timestamps: true
   }
 );
 

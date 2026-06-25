@@ -1,213 +1,143 @@
-import { useState, useContext } from "react";
+import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { Building2, Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
 
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
-
-import Input from "../../components/ui/Input";
-import PasswordInput from "../../components/ui/PasswordInput";
-import Button from "../../components/ui/Button";
+import { loginSchema } from "../../schemas/loginSchema";
 
 export default function Login() {
-  const navigate = useNavigate();
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({ resolver: zodResolver(loginSchema) });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: (data) => api.post("/auth/login", data),
+    onSuccess: (res) => {
+      login(res.data);
+      toast.success(`Welcome back, ${res.data.user?.firstName}!`);
+      navigate("/dashboard");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Login failed. Please try again.");
+    }
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const res = await api.post("/auth/login", formData);
-      login(res.data);
-      toast.success("Welcome back!");
-      navigate("/dashboard");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex bg-slate-950 font-sans antialiased">
-      {/* LEFT SIDE - PREMIUM MARKETING SIDEBAR */}
-      <div className="hidden lg:flex w-[45%] bg-slate-950 p-16 relative overflow-hidden flex-col justify-between select-none border-r border-white/[0.04]">
-        {/* Subtle Luxury Ambient Glows */}
-        <div className="absolute w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[120px] -top-40 -left-40" />
-        <div className="absolute w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] bottom-10 right-[-10%]" />
+    <div className="min-h-screen bg-[#080d1a] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-600/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-600/5 blur-[100px] pointer-events-none" />
 
-        {/* Decorative Grid Overlay for a tech/business vibe */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:32px_32px]" />
-
-        {/* Brand/Logo Area */}
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <span className="text-white font-black text-lg tracking-wider">
-              W
-            </span>
-          </div>
-          <span className="text-white font-semibold text-lg tracking-tight">
-            Work2<span className="text-indigo-400">Business</span>
-          </span>
-        </div>
-
-        {/* Core Marketing Content */}
-        <div className="relative z-10 my-auto max-w-lg">
-          <h1 className="text-4xl xl:text-5xl font-bold text-white tracking-tight leading-[1.15]">
-            Turn your career into a <br />
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-              business opportunity.
-            </span>
-          </h1>
-
-          <p className="mt-6 text-slate-400 text-base xl:text-lg leading-relaxed font-light">
-            Analyze your industry experience, architect your professional
-            profile, and deploy AI-powered business structures engineered for
-            entrepreneurship.
-          </p>
-
-          {/* Feature Badges */}
-          <div className="mt-10 space-y-4">
-            {[
-              "Build enterprise-grade profiles",
-              "AI-generated tactical business plans",
-              "Seamless career-to-business pathways",
-            ].map((text, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-3.5 transition hover:bg-white/[0.04]"
-              >
-                <div className="flex-shrink-0 h-5 w-5 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-400/20">
-                  <svg
-                    className="h-3 w-3 text-indigo-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <span className="text-slate-300 text-sm font-medium tracking-wide">
-                  {text}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer/Trust Element */}
-        <div className="relative z-10 pt-6 border-t border-white/[0.04]">
-          <p className="text-xs text-slate-500 tracking-wide">
-            © {new Date().getFullYear()} Work2Business Inc. All rights reserved.
-          </p>
-        </div>
-      </div>
-
-      {/* RIGHT SIDE - CLEAN, MINIMALIST LOGIN FORM */}
-      <div className="w-full lg:w-[55%] flex items-center justify-center bg-slate-900/40 px-6 sm:px-12 lg:px-20">
-        <div className="w-full max-w-[440px] py-12">
-          {/* Header Area */}
-          <div className="mb-9 text-left">
-            {/* Mobile-only logo visibility */}
-            <div className="flex lg:hidden items-center gap-2 mb-6">
-              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">W</span>
-              </div>
-              <span className="text-white font-bold text-base">
-                Work2Business
-              </span>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-3 group mb-6">
+            <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-glow-sm group-hover:scale-105 transition-transform">
+              <Building2 className="text-white w-5 h-5" />
             </div>
+            <span className="text-xl font-bold text-white tracking-tight">Work2Business</span>
+          </Link>
+          <h1 className="text-2xl font-bold text-white mt-2">Welcome back</h1>
+          <p className="text-slate-400 text-sm mt-1.5">Sign in to continue your entrepreneurship journey</p>
+        </div>
 
-            <h2 className="text-3xl font-bold tracking-tight text-white">
-              Welcome back
-            </h2>
-            <p className="text-slate-400 mt-2.5 text-sm">
-              Enter your details to securely access your entrepreneurship suite.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-5">
-              <Input
-                label="Email address"
-                type="email"
-                required
-                placeholder="name@company.com"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="w-full transition duration-200 bg-slate-900 border-slate-800 text-white focus:ring-2 focus:ring-indigo-500/30"
-              />
-
-              <div className="space-y-1.5 relative">
-                <PasswordInput
-                  label="Password"
-                  required
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  className="w-full transition duration-200 bg-slate-900 border-slate-800 text-white focus:ring-2 focus:ring-indigo-500/30"
-                />
-              </div>
-            </div>
-
-            {/* Remember Me & Forgot Password Utilities */}
-            <div className="flex items-center justify-between text-sm pt-1">
-              <label className="flex items-center gap-2.5 text-slate-400 cursor-pointer select-none group">
+        {/* Card */}
+        <div className="glass rounded-2xl p-8 shadow-card">
+          <form onSubmit={handleSubmit(mutate)} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-slate-800 bg-slate-900 text-indigo-500 focus:ring-indigo-500/30 accent-indigo-500 transition cursor-pointer"
+                  {...register("email")}
+                  type="email"
+                  placeholder="you@example.com"
+                  className="input-base pl-10"
+                  autoComplete="email"
                 />
-                <span className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition">
-                  Remember me
-                </span>
-              </label>
-
-              <Link
-                to="/forgot-password"
-                className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors duration-150 text-sm"
-              >
-                Forgot password?
-              </Link>
+              </div>
+              {errors.email && (
+                <p className="text-red-400 text-xs mt-1.5">{errors.email.message}</p>
+              )}
             </div>
 
-            {/* Submit Action Button */}
-            <Button
-              type="submit"
-              loading={loading}
-              className="w-full py-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-semibold text-sm tracking-wide shadow-lg shadow-black/20 active:scale-[0.99] transform transition duration-150 flex items-center justify-center gap-2"
-            >
-              Sign In to Suite
-            </Button>
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-slate-300">Password</label>
+                <Link to="/forgot-password" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  {...register("password")}
+                  type="password"
+                  placeholder="••••••••"
+                  className="input-base pl-10"
+                  autoComplete="current-password"
+                />
+              </div>
+              {errors.password && (
+                <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>
+              )}
+            </div>
 
-            {/* Registration Callout */}
-            <p className="text-center text-sm text-slate-500 pt-2">
-              New to our platform?
-              <Link
-                to="/register"
-                className="text-indigo-400 ml-1.5 font-semibold hover:text-indigo-300 transition-colors duration-150"
-              >
-                Create an account
+            <button
+              type="submit"
+              disabled={isPending}
+              className="btn-primary w-full mt-2"
+            >
+              {isPending ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-5 border-t border-slate-800 text-center">
+            <p className="text-slate-400 text-sm">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                Create one free
               </Link>
             </p>
-          </form>
+          </div>
         </div>
-      </div>
+
+        {/* Trust signal */}
+        <p className="text-center mt-6 text-xs text-slate-600 flex items-center justify-center gap-2">
+          <Sparkles className="w-3 h-3 text-indigo-500" />
+          AI-powered business planning trusted by 12,400+ professionals
+        </p>
+      </motion.div>
     </div>
   );
 }

@@ -3,10 +3,11 @@ export default function RecommendationFilters({
   setFilters
 }) {
   return (
-    <div className="grid md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
+      {/* RISK SELECTOR */}
       <select
-        className="border p-3 rounded-xl"
+        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-xs font-semibold uppercase tracking-wide text-slate-300 transition-all cursor-pointer"
         value={filters.risk}
         onChange={(e) =>
           setFilters({
@@ -15,16 +16,17 @@ export default function RecommendationFilters({
           })
         }
       >
-        <option value="">All Risk Levels</option>
-        <option value="LOW">Low</option>
-        <option value="MEDIUM">Medium</option>
-        <option value="HIGH">High</option>
+        <option value="" className="bg-slate-950 text-slate-300">All Risk Levels</option>
+        <option value="LOW" className="bg-slate-950 text-slate-300">Low Risk</option>
+        <option value="MEDIUM" className="bg-slate-950 text-slate-300">Medium Risk</option>
+        <option value="HIGH" className="bg-slate-950 text-slate-300">High Risk</option>
       </select>
 
+      {/* MAX CAPITAL */}
       <input
         type="number"
-        placeholder="Max Capital"
-        className="border p-3 rounded-xl"
+        placeholder="MAX CAPITAL"
+        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-xs font-semibold tracking-wide text-slate-200 placeholder-slate-600 transition-all"
         value={filters.maxCapital}
         onChange={(e) =>
           setFilters({
@@ -34,10 +36,11 @@ export default function RecommendationFilters({
         }
       />
 
+      {/* CATEGORY ENTRY */}
       <input
         type="text"
-        placeholder="Category"
-        className="border p-3 rounded-xl"
+        placeholder="CATEGORY SEARCH"
+        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-xs font-semibold tracking-wide text-slate-200 placeholder-slate-600 transition-all"
         value={filters.category}
         onChange={(e) =>
           setFilters({
