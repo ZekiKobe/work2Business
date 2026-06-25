@@ -1,124 +1,85 @@
+import { CheckCircle2, User, Briefcase, DollarSign, Star, Heart } from "lucide-react";
+
 export default function ReviewStep({ formData }) {
+  const sections = [
+    {
+      icon: User,
+      title: "Personal Info",
+      color: "text-blue-400",
+      bg: "bg-blue-500/10 border-blue-500/20",
+      items: [
+        { label: "Name", value: `${formData.firstName} ${formData.lastName}` },
+        { label: "Email", value: formData.email }
+      ]
+    },
+    {
+      icon: Briefcase,
+      title: "Employment",
+      color: "text-indigo-400",
+      bg: "bg-indigo-500/10 border-indigo-500/20",
+      items: [
+        { label: "Profession", value: formData.profession || "—" },
+        { label: "Employer", value: formData.employer || "—" }
+      ]
+    },
+    {
+      icon: DollarSign,
+      title: "Financial Capacity",
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/10 border-emerald-500/20",
+      items: [
+        { label: "Monthly Salary", value: formData.monthlySalary ? `${Number(formData.monthlySalary).toLocaleString()} ETB` : "—" },
+        { label: "Available Capital", value: formData.availableCapital ? `${Number(formData.availableCapital).toLocaleString()} ETB` : "—" },
+        { label: "Hours/Week", value: formData.availableHoursPerWeek ? `${formData.availableHoursPerWeek} hrs` : "—" }
+      ]
+    },
+    {
+      icon: Star,
+      title: "Skills",
+      color: "text-yellow-400",
+      bg: "bg-yellow-500/10 border-yellow-500/20",
+      items: [
+        { label: "Selected Skills", value: formData.skills.length > 0 ? formData.skills.join(", ") : "None selected" }
+      ]
+    },
+    {
+      icon: Heart,
+      title: "Interests",
+      color: "text-pink-400",
+      bg: "bg-pink-500/10 border-pink-500/20",
+      items: [
+        { label: "Business Interests", value: formData.interests.length > 0 ? formData.interests.join(", ") : "None selected" }
+      ]
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Step Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white mb-2">
-          Review Information
-        </h2>
-        <p className="text-slate-400 text-sm">
-          Please verify your details before deploying your entrepreneurship suite.
-        </p>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <p className="text-xs text-emerald-300">Everything looks good! Review your details before submitting.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        {/* CARD 1: IDENTITY */}
-        <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-            Personal Details
-          </h3>
-          <div className="space-y-2">
-            <div>
-              <span className="block text-xs text-slate-500 font-medium">Full Name</span>
-              <span className="text-sm font-medium text-white">
-                {formData.firstName || formData.lastName 
-                  ? `${formData.firstName} ${formData.lastName}`.trim() 
-                  : "—"}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs text-slate-500 font-medium">Email Address</span>
-              <span className="text-sm font-medium text-white break-all">
-                {formData.email || "—"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 2: CAREER */}
-        <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-            Professional Profile
-          </h3>
-          <div className="space-y-2">
-            <div>
-              <span className="block text-xs text-slate-500 font-medium">Profession</span>
-              <span className="text-sm font-medium text-white">
-                {formData.profession || "—"}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs text-slate-500 font-medium">Current Employer</span>
-              <span className="text-sm font-medium text-white">
-                {formData.employer || "—"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 3: FINANCES */}
-        <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4 md:col-span-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-            Financial Structure
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="block text-xs text-slate-500 font-medium">Est. Monthly Salary</span>
-              <span className="text-base font-semibold text-white mt-0.5 block">
-                {formData.monthlySalary ? `$${Number(formData.monthlySalary).toLocaleString()}` : "—"}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs text-slate-500 font-medium">Available Liquid Capital</span>
-              <span className="text-base font-semibold text-emerald-400 mt-0.5 block">
-                {formData.availableCapital ? `$${Number(formData.availableCapital).toLocaleString()}` : "—"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 4: SKILLS & ATTRIBUTES */}
-        <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4 md:col-span-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-            Core Core Capabilities & Interests
-          </h3>
-          
-          <div className="space-y-4">
-            {/* Skills Badges */}
-            <div>
-              <span className="block text-xs text-slate-500 font-medium mb-2">Selected Expertise</span>
-              <div className="flex flex-wrap gap-1.5">
-                {formData.skills && formData.skills.length > 0 ? (
-                  formData.skills.map((skill) => (
-                    <span key={skill} className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-950 text-slate-300 border border-slate-800">
-                      {skill}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-sm text-slate-600 italic">No skills selected</span>
-                )}
+      <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+        {sections.map((section) => {
+          const Icon = section.icon;
+          return (
+            <div key={section.title} className={`border rounded-xl p-3.5 ${section.bg}`}>
+              <div className="flex items-center gap-2 mb-2.5">
+                <Icon className={`w-3.5 h-3.5 ${section.color}`} />
+                <span className={`text-xs font-bold uppercase tracking-wider ${section.color}`}>{section.title}</span>
+              </div>
+              <div className="space-y-1.5">
+                {section.items.map((item) => (
+                  <div key={item.label} className="flex gap-2 text-xs">
+                    <span className="text-slate-500 w-28 shrink-0">{item.label}:</span>
+                    <span className="text-slate-200 break-words">{item.value}</span>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Interests Badges */}
-            <div>
-              <span className="block text-xs text-slate-500 font-medium mb-2">Target Sectors</span>
-              <div className="flex flex-wrap gap-1.5">
-                {formData.interests && formData.interests.length > 0 ? (
-                  formData.interests.map((interest) => (
-                    <span key={interest} className="px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-500/5 text-indigo-400 border border-indigo-500/20">
-                      {interest}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-sm text-slate-600 italic">No business interests chosen</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
+          );
+        })}
       </div>
     </div>
   );

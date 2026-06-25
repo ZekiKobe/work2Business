@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, Building2 } from "lucide-react";
 
-import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
-import Stepper from "../../components/ui/Stepper";
+import { AuthContext } from "../../context/AuthContext";
+import api from "../../api/axios";
 
 import PersonalInfoStep from "../../components/auth/PersonalInfoStep";
 import EmploymentStep from "../../components/auth/EmploymentStep";
@@ -15,59 +15,68 @@ import SkillsStep from "../../components/auth/SkillsStep";
 import InterestsStep from "../../components/auth/InterestsStep";
 import ReviewStep from "../../components/auth/ReviewStep";
 
-import api from "../../api/axios";
+const STEPS = [
+  { id: 1, label: "Personal" },
+  { id: 2, label: "Employment" },
+  { id: 3, label: "Financial" },
+  { id: 4, label: "Skills" },
+  { id: 5, label: "Interests" },
+  { id: 6, label: "Review" }
+];
 
-const TOTAL_STEPS = 6;
+const INITIAL_DATA = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  profession: "",
+  employer: "",
+  monthlySalary: "",
+  availableCapital: "",
+  availableHoursPerWeek: "",
+  skills: [],
+  interests: []
+};
 
 export default function Register() {
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState(INITIAL_DATA);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    profession: "",
-    employer: "",
-    monthlySalary: "",
-    availableCapital: "",
-    skills: [],
-    interests: [],
+  const { mutate, isPending } = useMutation({
+    mutationFn: (payload) => api.post("/auth/register", payload),
+    onSuccess: (res) => {
+      login(res.data);
+      toast.success("Welcome to Work2Business! Let's build your future.");
+      navigate("/dashboard");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Registration failed. Please try again.");
+    }
   });
 
   const validateStep = () => {
     switch (step) {
       case 1:
-        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-          toast.error("Please complete all fields");
-          return false;
-        }
+        if (!formData.firstName.trim()) { toast.error("First name is required"); return false; }
+        if (!formData.lastName.trim()) { toast.error("Last name is required"); return false; }
+        if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) { toast.error("Valid email is required"); return false; }
+        if (!formData.password || formData.password.length < 8) { toast.error("Password must be at least 8 characters"); return false; }
         break;
       case 2:
-        if (!formData.profession || !formData.employer) {
-          toast.error("Please provide employment information");
-          return false;
-        }
+        if (!formData.profession.trim()) { toast.error("Profession is required"); return false; }
         break;
       case 3:
-        if (!formData.monthlySalary || !formData.availableCapital) {
-          toast.error("Please provide financial information");
-          return false;
+        if (!formData.availableHoursPerWeek || Number(formData.availableHoursPerWeek) < 1) {
+          toast.error("Please enter your available hours per week"); return false;
         }
         break;
       case 4:
-        if (formData.skills.length === 0) {
-          toast.error("Select at least one skill");
-          return false;
-        }
+        if (formData.skills.length === 0) { toast.error("Select at least one skill"); return false; }
         break;
       case 5:
-        if (formData.interests.length === 0) {
-          toast.error("Select at least one interest");
-          return false;
-        }
+        if (formData.interests.length === 0) { toast.error("Select at least one interest"); return false; }
         break;
       default:
         break;
@@ -75,39 +84,23 @@ export default function Register() {
     return true;
   };
 
-  const nextStep = () => {
-    if (!validateStep()) return;
-    if (step < TOTAL_STEPS) setStep(step + 1);
-  };
+  const next = () => { if (validateStep()) setStep((s) => Math.min(s + 1, 6)); };
+  const back = () => setStep((s) => Math.max(s - 1, 1));
 
-  const previousStep = () => {
-    if (step > 1) setStep(step - 1);
-  };
-
-  const submitRegistration = async () => {
-    try {
-      setLoading(true);
-      const payload = {
-        ...formData,
-        monthlySalary: Number(formData.monthlySalary),
-        availableCapital: Number(formData.availableCapital),
-      };
-
-      await api.post("/auth/register", payload);
-      toast.success("Account created successfully!");
-      navigate("/login");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
-    } finally {
-      setLoading(false);
-    }
+  const submit = () => {
+    mutate({
+      ...formData,
+      monthlySalary: Number(formData.monthlySalary) || 0,
+      availableCapital: Number(formData.availableCapital) || 0,
+      availableHoursPerWeek: Number(formData.availableHoursPerWeek) || 0
+    });
   };
 
   const renderStep = () => {
     switch (step) {
-      case 1: return <PersonalInfoStep formData={formData} setFormData={setFormData} placeholders={{ firstName: "John", lastName: "Doe", email: "john@company.com", password: "••••••••" }} />;
-      case 2: return <EmploymentStep formData={formData} setFormData={setFormData} placeholders={{ profession: "Software Engineer", employer: "Acme Corp" }} />;
-      case 3: return <FinancialStep formData={formData} setFormData={setFormData} placeholders={{ monthlySalary: "5000", availableCapital: "25000" }} />;
+      case 1: return <PersonalInfoStep formData={formData} setFormData={setFormData} />;
+      case 2: return <EmploymentStep formData={formData} setFormData={setFormData} />;
+      case 3: return <FinancialStep formData={formData} setFormData={setFormData} />;
       case 4: return <SkillsStep formData={formData} setFormData={setFormData} />;
       case 5: return <InterestsStep formData={formData} setFormData={setFormData} />;
       case 6: return <ReviewStep formData={formData} />;
@@ -115,154 +108,143 @@ export default function Register() {
     }
   };
 
+  const progress = ((step - 1) / (STEPS.length - 1)) * 100;
+
   return (
-    <div className="min-h-screen flex bg-slate-950 font-sans antialiased text-slate-200 selection:bg-indigo-500/30">
-
-      {/* LEFT SIDE - BRAND SIDEBAR (Matches Login perfectly) */}
-      <div className="hidden lg:flex w-[40%] bg-slate-900/40 border-r border-slate-800/60 p-16 relative overflow-hidden flex-col justify-between select-none">
-        
-        {/* Luxury Ambient Glows */}
+    <div className="min-h-screen flex bg-[#080d1a] font-sans antialiased overflow-hidden">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex w-[42%] relative flex-col justify-between p-14 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/60 via-slate-900/40 to-[#080d1a]" />
         <div className="absolute w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[130px] -top-40 -left-40" />
-        <div className="absolute w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[110px] bottom-10 right-[-10%]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:32px_32px]" />
+        <div className="absolute w-[300px] h-[300px] bg-purple-500/8 rounded-full blur-[100px] bottom-20 right-0" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-        {/* Brand/Logo */}
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <span className="text-white font-black text-lg tracking-wider">W</span>
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl">
+            <Building2 className="text-white w-5 h-5" />
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">
-            Work2<span className="text-indigo-400">Business</span>
-          </span>
+          <span className="text-white font-bold text-lg tracking-tight">Work2Business</span>
         </div>
 
-        {/* Dynamic Marketing Content */}
-        <div className="relative z-10 my-auto max-w-sm">
-          <h1 className="text-4xl font-bold text-white tracking-tight leading-[1.2]">
-            Build your setup <br />
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-              in simple steps.
-            </span>
-          </h1>
-          <p className="mt-4 text-slate-400 text-sm leading-relaxed font-light">
-            We will analyze your professional attributes, current capacity, and initial capital structures to calibrate optimal entrepreneurship tracks.
+        <div className="relative z-10">
+          <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-4">Your Journey Starts Here</p>
+          <h2 className="text-4xl font-bold text-white leading-tight tracking-tight mb-5">
+            Turn your expertise<br />
+            <span className="gradient-text">into a business.</span>
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            We analyze your professional background, skills, and financial capacity to match you with the perfect business opportunities.
           </p>
+
+          {/* Step indicators */}
+          <div className="space-y-3">
+            {STEPS.map((s) => (
+              <div key={s.id} className={`flex items-center gap-3 transition-all duration-300 ${s.id <= step ? "opacity-100" : "opacity-40"}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300
+                  ${s.id < step ? "bg-indigo-500 text-white" : s.id === step ? "bg-indigo-500/20 border-2 border-indigo-500 text-indigo-400" : "bg-slate-800 text-slate-600"}`}>
+                  {s.id < step ? <CheckCircle2 className="w-3.5 h-3.5" /> : s.id}
+                </div>
+                <span className={`text-sm font-medium ${s.id === step ? "text-white" : s.id < step ? "text-slate-400" : "text-slate-600"}`}>{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Copyright */}
-        <div className="relative z-10 pt-6 border-t border-slate-800/60">
-          <p className="text-xs text-slate-600 tracking-wide">
-            © {new Date().getFullYear()} Work2Business Inc.
-          </p>
+        <div className="relative z-10">
+          <p className="text-xs text-slate-600">&copy; {new Date().getFullYear()} Work2Business Inc. All rights reserved.</p>
         </div>
       </div>
 
-      {/* RIGHT SIDE - MODERN DARK MULTI-STEP CARD */}
-      <div className="w-full lg:w-[60%] flex items-center justify-center px-6 sm:px-12 lg:px-16 py-12 relative overflow-y-auto">
-        
-        {/* Extra ambient light layer on the form side */}
-        <div className="absolute w-[600px] h-[600px] bg-indigo-600/[0.03] rounded-full blur-[140px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Right form panel */}
+      <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-10 overflow-y-auto">
+        <div className="absolute top-0 left-1/2 w-[600px] h-[300px] bg-indigo-600/8 blur-[100px] -translate-x-1/4 pointer-events-none" />
+        <div className="w-full max-w-[520px] relative z-10">
 
-        <div className="w-full max-w-[540px] relative z-10">
-          
-          {/* Mobile Logo Viewport fallback */}
-          <div className="flex lg:hidden items-center gap-2 mb-8">
-            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">W</span>
+          {/* Mobile logo */}
+          <div className="flex lg:hidden items-center gap-2.5 mb-8">
+            <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg">
+              <Building2 className="text-white w-4 h-4" />
             </div>
-            <span className="text-white font-bold text-base">Work2Business</span>
+            <span className="text-white font-bold text-base tracking-tight">Work2Business</span>
           </div>
 
-          {/* Core Slate Dashboard Card Wrapper */}
-          <Card className="!bg-slate-900/60 !border !border-slate-800/80 !backdrop-blur-xl !shadow-2xl !rounded-2xl p-6 sm:p-10 space-y-7">
-            
-            {/* Context Heading */}
-            <div className="text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Create Your Account
-              </h1>
-              <p className="text-slate-400 mt-2 text-sm font-light">
-                Start your journey from employee to entrepreneur.
-              </p>
-            </div>
+          {/* Header */}
+          <div className="mb-6">
+            <p className="section-label mb-1">Step {step} of {STEPS.length}</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              {step === 1 && "Create your account"}
+              {step === 2 && "Your employment background"}
+              {step === 3 && "Financial capacity"}
+              {step === 4 && "Your professional skills"}
+              {step === 5 && "Your business interests"}
+              {step === 6 && "Review your profile"}
+            </h1>
+          </div>
 
-            {/* Stepper Interactive Module Container */}
-            <div className="space-y-3 bg-slate-950/60 border border-slate-800/50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Setup Progress
-                </span>
-                <span className="text-xs font-bold text-indigo-400 bg-indigo-950/40 border border-indigo-900/30 px-2.5 py-1 rounded-md">
-                  Step {step} of {TOTAL_STEPS}
-                </span>
-              </div>
-              <Stepper currentStep={step} totalSteps={TOTAL_STEPS} />
+          {/* Progress bar */}
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-slate-500 mb-2">
+              <span>{STEPS[step - 1]?.label}</span>
+              <span>{Math.round(progress)}% complete</span>
             </div>
-
-            {/* Injected Content Window */}
-            <div className="min-h-[260px] flex flex-col justify-start pt-2">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -12 }}
-                  transition={{ duration: 0.18 }}
-                  className="w-full text-slate-200"
-                >
-                  {renderStep()}
-                </motion.div>
-              </AnimatePresence>
+            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-indigo-600 to-purple-500 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
             </div>
+          </div>
 
-            {/* Button Layout Row */}
-            <div className="flex items-center justify-between pt-5 border-t border-slate-800/80 gap-4">
+          {/* Card */}
+          <div className="glass rounded-2xl p-7 shadow-card">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderStep()}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation buttons */}
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800">
               {step > 1 ? (
-                <Button
-                  type="button"
-                  onClick={previousStep}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-semibold text-sm transition flex items-center gap-1.5 active:scale-[0.98]"
-                >
-                  <ChevronLeft size={16} strokeWidth={2.5} />
-                  Back
-                </Button>
+                <button onClick={back} className="btn-secondary">
+                  <ChevronLeft className="w-4 h-4" /> Back
+                </button>
               ) : (
                 <div />
               )}
 
-              {step < TOTAL_STEPS ? (
-                <Button
-                  type="button"
-                  onClick={nextStep}
-                  className="ml-auto px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-semibold text-sm tracking-wide shadow-md transition flex items-center gap-1.5 active:scale-[0.98]"
-                >
-                  Next Step
-                  <ChevronRight size={16} strokeWidth={2.5} />
-                </Button>
+              {step < 6 ? (
+                <button onClick={next} className="btn-primary ml-auto">
+                  Continue <ChevronRight className="w-4 h-4" />
+                </button>
               ) : (
-                <Button
-                  loading={loading}
-                  onClick={submitRegistration}
-                  className="ml-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm tracking-wide shadow-lg shadow-indigo-600/20 transition flex items-center gap-2 active:scale-[0.98]"
-                >
-                  <CheckCircle2 size={16} strokeWidth={2.5} />
-                  Complete Setup
-                </Button>
+                <button onClick={submit} disabled={isPending} className="btn-primary ml-auto">
+                  {isPending ? (
+                    <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Creating account...</>
+                  ) : (
+                    <><CheckCircle2 className="w-4 h-4" /> Complete Setup</>
+                  )}
+                </button>
               )}
             </div>
+          </div>
 
-            {/* Alternative Action Footer Links */}
-            <p className="text-center text-sm text-slate-500 pt-1">
-              Already have an account?
-              <Link to="/login" className="text-indigo-400 ml-1.5 font-semibold hover:text-indigo-300 transition">
-                Sign In
-              </Link>
-            </p>
-
-          </Card>
+          <p className="text-center mt-5 text-sm text-slate-500">
+            Already have an account?{" "}
+            <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
-
     </div>
   );
 }
