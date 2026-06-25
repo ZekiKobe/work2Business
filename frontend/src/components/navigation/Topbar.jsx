@@ -1,52 +1,64 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, TrendingUp } from "lucide-react";
 import { useContext } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+
+const PAGE_TITLES = {
+  "/dashboard": { title: "Dashboard", subtitle: "Your entrepreneurship overview" },
+  "/recommendations": { title: "Recommendations", subtitle: "Business ideas matched to your profile" },
+  "/plans": { title: "Business Plans", subtitle: "Your AI-generated business plans" },
+  "/profile": { title: "Profile", subtitle: "Manage your professional profile" }
+};
 
 export default function Topbar() {
   const { user } = useContext(AuthContext);
+  const { pathname } = useLocation();
+
+  const page = PAGE_TITLES[pathname] || { title: "Work2Business", subtitle: "" };
+  const completeness = user?.profileCompleteness ?? 0;
 
   return (
-    <header className="h-20 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 px-6 flex items-center justify-between sticky top-0 z-40">
-
-      {/* SEARCH INTERFACE */}
-      <div className="flex items-center gap-3 bg-slate-900/40 border border-slate-800 px-3 py-2 rounded-xl w-64 focus-within:w-72 focus-within:border-slate-700 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all duration-200">
-        <Search size={16} className="text-slate-500" />
-        <input
-          placeholder="Search..."
-          className="bg-transparent outline-none text-xs font-medium text-slate-200 placeholder-slate-600 w-full"
-        />
+    <header className="h-16 bg-[#080d1a]/90 backdrop-blur-md border-b border-slate-800/60 px-6 flex items-center justify-between sticky top-0 z-30">
+      {/* Page title */}
+      <div>
+        <h2 className="text-sm font-bold text-white">{page.title}</h2>
+        <p className="text-xs text-slate-500 hidden sm:block">{page.subtitle}</p>
       </div>
 
-      {/* UTILITY & PROFILE ACTIONS */}
-      <div className="flex items-center gap-6">
+      {/* Right actions */}
+      <div className="flex items-center gap-4">
+        {/* Profile completion alert */}
+        {completeness < 80 && (
+          <Link
+            to="/profile"
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg hover:bg-amber-500/15 transition-colors"
+          >
+            <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-xs text-amber-300 font-medium">Complete profile — {completeness}%</span>
+          </Link>
+        )}
 
-        {/* NOTIFICATIONS */}
-        <button className="text-slate-400 hover:text-slate-200 p-1.5 hover:bg-slate-900 rounded-lg transition-colors relative">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+        {/* Notification */}
+        <button className="relative p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition-colors">
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full" />
         </button>
 
-        {/* PROFILE METADATA CONTAINER */}
-        <div className="flex items-center gap-3 border-l border-slate-900 pl-6">
-          
-          {/* USER AVATAR BADGE */}
-          <div className="h-9 w-9 rounded-xl bg-blue-600 font-mono text-sm font-bold text-white flex items-center justify-center shadow-lg shadow-blue-600/10 uppercase select-none">
-            {user?.firstName?.[0] || "U"}
+        {/* User avatar */}
+        <div className="flex items-center gap-3 border-l border-slate-800/60 pl-4">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-xs select-none">
+            {user?.firstName?.[0]?.toUpperCase() || "U"}
           </div>
-
           <div className="hidden sm:block">
-            <p className="text-xs font-semibold text-slate-200 tracking-tight leading-none">
-              {user?.firstName || "Operator"}
+            <p className="text-xs font-semibold text-slate-200 leading-none">
+              {user ? `${user.firstName} ${user.lastName}` : "User"}
             </p>
-            <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mt-1 leading-none">
-              Partner
+            <p className="text-[10px] text-slate-500 mt-0.5 leading-none capitalize">
+              {user?.role?.toLowerCase() || "member"}
             </p>
           </div>
-
         </div>
-
       </div>
-
     </header>
   );
 }

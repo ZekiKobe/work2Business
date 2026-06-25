@@ -1,30 +1,17 @@
-export default function PageHeader({
-  title,
-  subtitle,
-  actions
-}) {
+export default function PageHeader({ title, subtitle, actions, badge }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 pb-5 border-b border-slate-900">
-
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-7">
       <div>
-        {/* PAGE TITLE */}
-        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          {title}
-        </h1>
-
-        {/* SUBTITLE */}
+        {badge && (
+          <span className="section-label mb-1.5 block">{badge}</span>
+        )}
+        <h1 className="text-2xl font-bold text-white tracking-tight">{title}</h1>
         {subtitle && (
-          <p className="mt-2 text-sm text-slate-400">
-            {subtitle}
-          </p>
+          <p className="mt-1 text-sm text-slate-400 leading-relaxed">{subtitle}</p>
         )}
       </div>
-
-      {/* HEADER ACTIONS STACK */}
       {actions && (
-        <div className="flex items-center gap-3 shrink-0">
-          {actions}
-        </div>
+        <div className="flex items-center gap-3 shrink-0">{actions}</div>
       )}
     </div>
   );

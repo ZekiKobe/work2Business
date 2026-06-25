@@ -1,91 +1,101 @@
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useContext } from "react";
 import {
   LayoutDashboard,
-  Briefcase,
+  Lightbulb,
   FileText,
   User,
   LogOut,
-  Building2
+  Building2,
+  ChevronRight,
+  TrendingUp
 } from "lucide-react";
-
-import { NavLink } from "react-router-dom";
-import { useContext } from "react";
-import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
-const menu = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Recommendations", icon: Briefcase, path: "/recommendations" },
-  { name: "Business Plans", icon: FileText, path: "/plans" },
-  { name: "Profile", icon: User, path: "/profile" }
+const MENU = [
+  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", desc: "Overview & stats" },
+  { name: "Recommendations", icon: Lightbulb, path: "/recommendations", desc: "Business ideas for you" },
+  { name: "Business Plans", icon: FileText, path: "/plans", desc: "Your generated plans" },
+  { name: "Profile", icon: User, path: "/profile", desc: "Manage your profile" }
 ];
 
 export default function Sidebar() {
-  const { logout } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const completeness = user?.profileCompleteness ?? 0;
+
   return (
-    <aside
-      className="
-        fixed left-0 top-0
-        h-screen w-72
-        bg-slate-950
-        border-r border-slate-900
-        flex flex-col
-        z-40
-      "
-    >
-      {/* BRAND & IDENTITY */}
-      <div className="px-6 py-6 border-b border-slate-900 flex flex-col gap-2">
-        <div className="flex items-center gap-2.5 group">
-          <div className="p-1.5 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-md shadow-blue-950/50">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f1e] border-r border-slate-800/60 flex flex-col z-40 shadow-2xl">
+      {/* Brand */}
+      <div className="px-5 py-5 border-b border-slate-800/60">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-glow-sm">
             <Building2 className="text-white w-4 h-4" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-white bg-gradient-to-r from-slate-50 to-slate-400 bg-clip-text">
-            Work2Business
-          </span>
+          <div>
+            <span className="text-sm font-bold text-white tracking-tight block">Work2Business</span>
+            <span className="text-[10px] text-indigo-400 font-medium uppercase tracking-widest">E2B Platform</span>
+          </div>
         </div>
-        <p className="text-[11px] text-slate-500 font-medium tracking-wide uppercase mt-1">
-          E2B Transition Engine
-        </p>
       </div>
 
-      {/* MENU NAVIGATION */}
-      <nav className="flex-1 px-4 py-6 space-y-1.5">
-        {menu.map((item) => {
-          const Icon = item.icon;
+      {/* User mini card */}
+      {user && (
+        <div className="mx-3 mt-4 mb-2 p-3 bg-slate-800/40 border border-slate-700/40 rounded-xl">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm select-none">
+              {user.firstName?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{user.firstName} {user.lastName}</p>
+              <p className="text-[10px] text-slate-500 truncate">{user.profession || "Employee → Entrepreneur"}</p>
+            </div>
+          </div>
+          {/* Profile completeness */}
+          <div className="mt-2.5">
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-slate-500">Profile</span>
+              <span className={`font-bold ${completeness >= 80 ? "text-emerald-400" : completeness >= 50 ? "text-yellow-400" : "text-red-400"}`}>
+                {completeness}%
+              </span>
+            </div>
+            <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${completeness >= 80 ? "bg-emerald-500" : completeness >= 50 ? "bg-yellow-500" : "bg-red-500"}`}
+                style={{ width: `${completeness}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* Nav menu */}
+      <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+        <p className="px-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 mt-2">Navigation</p>
+        {MENU.map((item) => {
+          const Icon = item.icon;
           return (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `
-                relative flex items-center gap-3.5
-                px-4 py-3 rounded-xl
-                text-sm font-medium
-                transition-all duration-200 group
-                ${
-                  isActive
-                    ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                    : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-100 border border-transparent"
-                }
-              `
+                `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
+                ${isActive
+                  ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/25"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent"
+                }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* ACTIVE GLOW INDICATOR */}
                   {isActive && (
-                    <span className="absolute left-0 top-3 bottom-3 w-0.5 bg-blue-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                    <span className="absolute left-0 top-2 bottom-2 w-0.5 bg-indigo-400 rounded-r-full" />
                   )}
-
-                  <Icon 
-                    size={18} 
-                    className={`transition-colors duration-200 ${
-                      isActive ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"
-                    }`} 
-                  />
-                  <span>{item.name}</span>
+                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                  <span className="flex-1">{item.name}</span>
+                  {isActive && <ChevronRight className="w-3 h-3 text-indigo-400/60" />}
                 </>
               )}
             </NavLink>
@@ -93,31 +103,16 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* FOOTER ACTION */}
-      <div className="p-4 border-t border-slate-900 bg-slate-950">
+      {/* Footer */}
+      <div className="p-3 border-t border-slate-800/60 space-y-1">
         <button
-          onClick={() => {
-            logout();
-            navigate("/login");
-          }}
-          className="
-            flex items-center gap-3.5
-            w-full px-4 py-3
-            rounded-xl
-            text-sm font-medium
-            text-rose-400/90
-            hover:bg-rose-500/10 hover:text-rose-400
-            border border-transparent hover:border-rose-500/20
-            transition-all duration-200
-          "
+          onClick={() => { logout(); navigate("/login"); }}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-200"
         >
-          <LogOut size={18} className="text-rose-400/70" />
-          <span>Logout System</span>
+          <LogOut className="w-4 h-4 shrink-0" />
+          Sign Out
         </button>
-
-        <p className="text-[10px] font-mono text-slate-600 mt-4 text-center tracking-wider">
-          v2.4.0 // COGNITIVE ENGINE
-        </p>
+        <p className="text-center text-[10px] text-slate-700 pt-1">&copy; {new Date().getFullYear()} Work2Business</p>
       </div>
     </aside>
   );

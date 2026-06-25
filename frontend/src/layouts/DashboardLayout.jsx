@@ -1,29 +1,16 @@
 import Sidebar from "../components/navigation/Sidebar";
 import Topbar from "../components/navigation/Topbar";
 
-export default function DashboardLayout({
-  children
-}) {
+export default function DashboardLayout({ children }) {
   return (
-    // Updated root layout wrapper to use slate-950 and force white text defaults
-    <div className="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-blue-500/30">
-
-      {/* SIDEBAR NAVIGATION PANEL */}
+    <div className="min-h-screen bg-[#080d1a] text-slate-100 antialiased">
       <Sidebar />
-
-      {/* MAIN CONTENT WORKSPACE VIEW */}
-      <div className="lg:pl-72 flex flex-col min-h-screen">
-
-        {/* SITE TOP INTEGRATION BAR */}
+      <div className="lg:pl-64 flex flex-col min-h-screen">
         <Topbar />
-
-        {/* CONTAINER VIEWPORTS */}
-        <main className="p-6 flex-1 bg-slate-950">
+        <main className="flex-1 p-6 animate-fade-in">
           {children}
         </main>
-
       </div>
-
     </div>
   );
 }
