@@ -157,7 +157,7 @@ function MilestoneTracker() {
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => api.get("/user/dashboard-stats").then((r) => r.data.data),
     staleTime: 1000 * 60 * 2
@@ -179,6 +179,13 @@ export default function Dashboard() {
         subtitle="Your entrepreneurship journey at a glance"
         badge="Dashboard"
       />
+
+      {isError && (
+        <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          Failed to load dashboard stats. Refresh the page to try again.
+        </div>
+      )}
 
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
@@ -262,7 +269,16 @@ export default function Dashboard() {
             <p className="text-xs text-slate-500 mt-0.5">Business plans created over the last 6 months</p>
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={isLoading ? [] : (stats.monthlyActivity || [])} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            {isLoading ? (
+              <div className="h-full flex items-center justify-center text-xs text-slate-600">Loading chart...</div>
+            ) : (stats.monthlyActivity || []).every((m) => m.count === 0) ? (
+              <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                <FileText className="w-8 h-8 text-slate-700 mb-2" />
+                <p className="text-xs text-slate-500">No plans created in the last 6 months</p>
+                <Link to="/recommendations" className="text-xs text-indigo-400 hover:text-indigo-300 mt-2">Generate your first plan →</Link>
+              </div>
+            ) : (
+            <BarChart data={stats.monthlyActivity || []} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis dataKey="month" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} dy={8} />
               <YAxis stroke="#475569" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -278,6 +294,7 @@ export default function Dashboard() {
               </defs>
               <Bar dataKey="count" name="Plans" fill="url(#barGrad)" radius={[5, 5, 0, 0]} maxBarSize={40} />
             </BarChart>
+            )}
           </ResponsiveContainer>
         </div>
 

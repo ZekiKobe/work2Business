@@ -73,6 +73,11 @@ const businessPlanSchema = new mongoose.Schema(
       default: 0,
       min: 0,
       max: 100
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   {

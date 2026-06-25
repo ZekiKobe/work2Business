@@ -85,6 +85,13 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
+    favoritePlans: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "BusinessPlan"
+      }
+    ],
+
     milestones: [
       {
         key: { type: String, required: true },
@@ -94,7 +101,13 @@ const userSchema = new mongoose.Schema(
         completedAt: { type: Date },
         order: { type: Number, default: 0 }
       }
-    ]
+    ],
+
+    preferences: {
+      emailOnPlan: { type: Boolean, default: true },
+      emailOnMilestone: { type: Boolean, default: true },
+      weeklyDigest: { type: Boolean, default: false }
+    }
   },
   {
     timestamps: true

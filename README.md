@@ -27,6 +27,13 @@ A professional fills out a 6-step onboarding profile covering their skills, avai
 - **Launch Milestone Tracker** — 10-step personalized launch checklist on the dashboard, persisted per user with optimistic UI
 - **AI Business Name Generator** — GPT-4o generates 5 brandable business name ideas for any chosen idea; click to copy
 
+### Admin Panel (ADMIN role)
+- **Platform overview** — Users, ideas, plans, and activity stats
+- **Business idea management** — Create, edit, delete, activate/deactivate ideas
+- **User management** — Change roles, deactivate/reactivate, permanent delete with confirmation
+- **Plan management** — View all plans, hide/restore from users, permanent delete with confirmation
+- **Admin seed** — `npm run seed:admin` creates default admin account (configure via `ADMIN_EMAIL` / `ADMIN_PASSWORD`)
+
 ### Auth & Security
 - JWT-based authentication with token persistence
 - bcrypt password hashing (cost factor 12)
@@ -107,7 +114,7 @@ work2business/
         ├── models/          # User, BusinessIdea, BusinessPlan
         ├── routes/          # auth, user, businessIdeas, recommendations,
         │                    #   businessPlan, ai
-        ├── seeds/           # businessSeed.js (15 ideas)
+        ├── seeds/           # businessSeed.js, userSeed.js (admin)
         ├── services/        # aiService, emailService, recommendationService,
         │                    #   businessPlanService
         ├── utils/           # generateToken
@@ -162,6 +169,20 @@ work2business/
 | POST | `/business-plan` | Generate AI business plan for an idea |
 | POST | `/business-names` | Generate 5 AI business name ideas |
 
+### Admin — `/api/v1/admin` (ADMIN role required)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/stats` | Platform overview stats |
+| GET | `/users` | List users (search, role filter, pagination) |
+| GET | `/users/:id` | User detail with plan counts |
+| PATCH | `/users/:id` | Update role or deactivate/reactivate |
+| DELETE | `/users/:id?confirm=true` | Permanently delete user and cascade data |
+| GET | `/plans` | List all plans across users |
+| PATCH | `/plans/:id` | Hide or restore a plan (`isActive`) |
+| DELETE | `/plans/:id?confirm=true` | Permanently delete a plan |
+
+Business idea CRUD for admins: `POST/PUT/DELETE /api/v1/business-ideas` (ADMIN only).
+
 ---
 
 ## Getting Started
@@ -206,14 +227,25 @@ EMAIL_PORT=587
 EMAIL_USER=your@email.com
 EMAIL_PASS=your_app_password
 FRONTEND_URL=http://localhost:5173
+ADMIN_EMAIL=admin@work2business.com
+ADMIN_PASSWORD=Admin@12345   # Change before production
 ```
 
 ### 3. Seed the database
 
 ```bash
 cd backend
-npm run seed
+npm run seed          # 15 business ideas
+npm run seed:admin    # default admin user
+# Or both:
+npm run seed:all
 ```
+
+**Default admin login** (after `npm run seed:admin`):
+- Email: `admin@work2business.com` (or `ADMIN_EMAIL` from `.env`)
+- Password: `Admin@12345` (or `ADMIN_PASSWORD` from `.env`)
+
+Change `ADMIN_PASSWORD` before deploying to production.
 
 This inserts 15 business ideas across Technology, Education, Finance, Healthcare, Retail, Food & Beverage, Creative, and more.
 

@@ -78,3 +78,89 @@ exports.sendPasswordResetEmail = async (email, resetToken) => {
 
   return { success: true, messageId: info.messageId };
 };
+
+exports.sendPlanGeneratedEmail = async (user, planTitle, ideaName) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const plansUrl = `${frontendUrl}/plans`;
+
+  const html = `
+    <!DOCTYPE html><html><body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #334155;">
+      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;">
+        <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">Work2Business</h1>
+        <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Your entrepreneurship platform</p>
+      </div>
+      <div style="padding:36px 40px;">
+        <h2 style="margin:0 0 12px;color:#f1f5f9;font-size:18px;">Your business plan is ready! 🚀</h2>
+        <p style="margin:0 0 20px;color:#94a3b8;font-size:14px;line-height:1.7;">
+          Hi ${user.firstName}, your AI-powered business plan for <strong style="color:#e2e8f0;">${ideaName}</strong> has been generated.
+        </p>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+          <p style="margin:0;color:#e2e8f0;font-size:14px;font-weight:600;">${planTitle}</p>
+          <p style="margin:4px 0 0;color:#64748b;font-size:12px;">8-section personalized plan</p>
+        </div>
+        <a href="${plansUrl}" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:600;">
+          View Your Plan →
+        </a>
+      </div>
+      <div style="padding:16px 40px;background:#0f172a;border-top:1px solid #1e293b;">
+        <p style="margin:0;color:#475569;font-size:11px;">&copy; ${new Date().getFullYear()} Work2Business · <a href="${frontendUrl}/settings" style="color:#475569;">Manage notifications</a></p>
+      </div>
+    </div>
+    </body></html>
+  `;
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log(`\n[EMAIL] Plan generated for ${user.email}: ${planTitle}`);
+    return;
+  }
+  await transporter.sendMail({
+    from: `"Work2Business" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `Your business plan for "${ideaName}" is ready`,
+    html
+  });
+};
+
+exports.sendMilestoneEmail = async (user, milestoneTitle) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+  const html = `
+    <!DOCTYPE html><html><body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #334155;">
+      <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:32px 40px;">
+        <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">Work2Business</h1>
+        <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Milestone achieved!</p>
+      </div>
+      <div style="padding:36px 40px;">
+        <h2 style="margin:0 0 12px;color:#f1f5f9;font-size:18px;">You completed a milestone! ✓</h2>
+        <p style="margin:0 0 20px;color:#94a3b8;font-size:14px;line-height:1.7;">
+          Hi ${user.firstName}, you just checked off a milestone on your journey to entrepreneurship:
+        </p>
+        <div style="background:#0f172a;border:1px solid #334155;border-left:3px solid #f59e0b;border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+          <p style="margin:0;color:#e2e8f0;font-size:14px;font-weight:600;">${milestoneTitle}</p>
+        </div>
+        <a href="${frontendUrl}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:600;">
+          View Dashboard →
+        </a>
+      </div>
+      <div style="padding:16px 40px;background:#0f172a;border-top:1px solid #1e293b;">
+        <p style="margin:0;color:#475569;font-size:11px;">&copy; ${new Date().getFullYear()} Work2Business · <a href="${frontendUrl}/settings" style="color:#475569;">Manage notifications</a></p>
+      </div>
+    </div>
+    </body></html>
+  `;
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log(`\n[EMAIL] Milestone completed for ${user.email}: ${milestoneTitle}`);
+    return;
+  }
+  await transporter.sendMail({
+    from: `"Work2Business" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `Milestone completed: ${milestoneTitle}`,
+    html
+  });
+};

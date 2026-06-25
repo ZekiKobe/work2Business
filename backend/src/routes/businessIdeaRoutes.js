@@ -11,6 +11,7 @@ router.get('/favorites', authMiddleware.protect, businessIdeaController.getFavor
 router.post('/:id/favorite', authMiddleware.protect, businessIdeaController.toggleFavorite);
 router.get('/:id/skill-gap', authMiddleware.protect, businessIdeaController.getSkillGap);
 router.post('/', authMiddleware.protect, authorizeRoles('ADMIN'), businessIdeaController.createIdea);
+router.put('/:id', authMiddleware.protect, authorizeRoles('ADMIN'), businessIdeaController.updateIdea);
 router.delete('/:id', authMiddleware.protect, authorizeRoles('ADMIN'), businessIdeaController.deleteIdea);
 
 module.exports = router;

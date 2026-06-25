@@ -13,6 +13,8 @@ const businessIdeaRoutes = require("./routes/businessIdeaRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const businessPlanRoutes = require("./routes/businessPlanRoute");
 const aiRoutes = require("./routes/aiRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.use("/api/v1/business-ideas", businessIdeaRoutes);
 app.use("/api/v1/recommendations", recommendationRoutes);
 app.use("/api/v1/business-plans", businessPlanRoutes);
 app.use("/api/v1/ai", aiRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 app.use(errorHandler);
 

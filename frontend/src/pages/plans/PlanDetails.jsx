@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   ArrowLeft, Zap, Wrench, ChevronDown, FileText, TrendingUp, DollarSign,
   BarChart3, Megaphone, Shield, Rocket, Target, Calendar, Trash2, Share2,
-  Printer, CheckCircle2, AlertTriangle
+  Download, CheckCircle2, AlertTriangle, Heart
 } from "lucide-react";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -115,9 +117,22 @@ export default function PlanDetails() {
     onSuccess: () => {
       toast.success("Plan deleted");
       queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries(["favorite-plans"]);
       navigate("/plans");
     },
     onError: () => toast.error("Failed to delete plan")
+  });
+
+  const { mutate: toggleFavorite, isPending: isTogglingFavorite } = useMutation({
+    mutationFn: () => api.post(`/business-plans/${id}/favorite`),
+    onSuccess: (res) => {
+      const favorited = res.data.isFavorited;
+      toast.success(favorited ? "Saved to favorites" : "Removed from favorites");
+      queryClient.invalidateQueries(["plan", id]);
+      queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries(["favorite-plans"]);
+    },
+    onError: () => toast.error("Failed to update favorite")
   });
 
   const handleShare = () => {
@@ -125,7 +140,66 @@ export default function PlanDetails() {
     toast.success("Link copied to clipboard!");
   };
 
-  const handlePrint = () => window.print();
+  const planContentRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!planContentRef.current) return;
+    setIsExporting(true);
+    toast.loading("Generating PDF...", { id: "pdf" });
+    try {
+      const element = planContentRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#080d1a",
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const margin = 10;
+      const usableHeight = pageHeight - margin * 2;
+
+      let y = margin;
+      let remaining = imgHeight;
+      let srcY = 0;
+
+      while (remaining > 0) {
+        const sliceHeight = Math.min(usableHeight, remaining);
+        const srcSliceH = (sliceHeight / imgHeight) * canvas.height;
+
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = srcSliceH;
+        const ctx = sliceCanvas.getContext("2d");
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcSliceH, 0, 0, canvas.width, srcSliceH);
+
+        const sliceData = sliceCanvas.toDataURL("image/png");
+        if (srcY > 0) {
+          pdf.addPage();
+          y = margin;
+        }
+        pdf.addImage(sliceData, "PNG", 0, y, imgWidth, sliceHeight);
+
+        srcY += srcSliceH;
+        remaining -= sliceHeight;
+      }
+
+      const filename = (data?.title || "business-plan").replace(/[^a-z0-9]/gi, "-").toLowerCase();
+      pdf.save(`${filename}.pdf`);
+      toast.success("PDF downloaded!", { id: "pdf" });
+    } catch (err) {
+      toast.error("Failed to generate PDF", { id: "pdf" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -156,7 +230,7 @@ export default function PlanDetails() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto" ref={planContentRef}>
         {/* Back nav */}
         <Link to="/plans" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-5 transition-colors w-fit">
           <ArrowLeft className="w-4 h-4" /> Back to Plans
@@ -185,11 +259,23 @@ export default function PlanDetails() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => toggleFavorite()}
+                disabled={isTogglingFavorite}
+                title={data.isFavorited ? "Remove from favorites" : "Save to favorites"}
+                className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                  data.isFavorited
+                    ? "border-pink-500/30 text-pink-400 bg-pink-500/10 hover:bg-pink-500/15"
+                    : "btn-secondary px-3 py-2"
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${data.isFavorited ? "fill-current" : ""}`} />
+              </button>
               <button onClick={handleShare} className="btn-secondary text-xs px-3 py-2">
                 <Share2 className="w-3.5 h-3.5" /> Share
               </button>
-              <button onClick={handlePrint} className="btn-secondary text-xs px-3 py-2">
-                <Printer className="w-3.5 h-3.5" /> Print
+              <button onClick={handleDownloadPDF} disabled={isExporting} className="btn-secondary text-xs px-3 py-2">
+                <Download className="w-3.5 h-3.5" /> {isExporting ? "Exporting..." : "PDF"}
               </button>
               <button onClick={() => deletePlan()} disabled={isDeleting} className="btn-danger text-xs px-3 py-2">
                 <Trash2 className="w-3.5 h-3.5" />

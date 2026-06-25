@@ -1,7 +1,10 @@
+const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const BusinessPlan = require("../models/BusinessPlan");
 const BusinessIdea = require("../models/BusinessIdea");
 const { calculateScore } = require("../services/recommendationService");
+const { createNotification } = require("./notificationController");
+const { sendMilestoneEmail } = require("../services/emailService");
 
 exports.getUserProfile = async (req, res) => {
   try {
@@ -151,7 +154,7 @@ exports.getDashboardStats = async (req, res) => {
           as: "idea"
         }
       },
-      { $unwind: { path: "$idea", preserveNullAndEmpty: true } },
+      { $unwind: { path: "$idea", preserveNullAndEmptyArrays: true } },
       { $group: { _id: "$idea.category", count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]);
@@ -236,9 +239,23 @@ exports.toggleMilestone = async (req, res) => {
       return res.status(404).json({ success: false, message: "Milestone not found" });
     }
 
+    const wasCompleted = milestone.completed;
     milestone.completed = !milestone.completed;
     milestone.completedAt = milestone.completed ? new Date() : undefined;
     await user.save();
+
+    if (!wasCompleted && milestone.completed) {
+      await createNotification(
+        user._id,
+        "MILESTONE_COMPLETED",
+        "Milestone Completed!",
+        `You completed: "${milestone.title}". Keep going!`,
+        "/dashboard"
+      );
+      if (user.preferences?.emailOnMilestone) {
+        sendMilestoneEmail(user, milestone.title).catch(() => {});
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -247,5 +264,61 @@ exports.toggleMilestone = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to toggle milestone" });
+  }
+};
+
+// PUT /user/change-password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Current and new password are required" });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: "New password must be at least 8 characters" });
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: "Password must include uppercase, lowercase, and a number" });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Current password is incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to change password" });
+  }
+};
+
+// PUT /user/preferences
+exports.updatePreferences = async (req, res) => {
+  try {
+    const { emailOnPlan, emailOnMilestone, weeklyDigest } = req.body;
+    const update = {};
+    if (emailOnPlan !== undefined) update["preferences.emailOnPlan"] = emailOnPlan;
+    if (emailOnMilestone !== undefined) update["preferences.emailOnMilestone"] = emailOnMilestone;
+    if (weeklyDigest !== undefined) update["preferences.weeklyDigest"] = weeklyDigest;
+
+    const user = await User.findByIdAndUpdate(req.user._id, update, { new: true });
+    res.status(200).json({ success: true, preferences: user.preferences });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to update preferences" });
+  }
+};
+
+// DELETE /user/account
+exports.deleteAccount = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { isActive: false });
+    res.status(200).json({ success: true, message: "Account deactivated successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to deactivate account" });
   }
 };

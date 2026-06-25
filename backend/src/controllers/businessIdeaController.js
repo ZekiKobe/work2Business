@@ -1,5 +1,34 @@
 const BusinessIdea = require('../models/BusinessIdea');
 const User = require('../models/User');
+const { createNotification } = require('./notificationController');
+
+const VALID_RISK_LEVELS = ["LOW", "MEDIUM", "HIGH"];
+
+function normalizeIdeaPayload(body = {}) {
+  const data = { ...body };
+
+  if (data.profitPotential !== undefined && data.expectedProfit === undefined) {
+    data.expectedProfit = data.profitPotential;
+  }
+
+  delete data.maximumCapital;
+  delete data.profitPotential;
+
+  if (data.riskLevel) {
+    const upper = String(data.riskLevel).toUpperCase();
+    if (VALID_RISK_LEVELS.includes(upper)) {
+      data.riskLevel = upper;
+    } else {
+      delete data.riskLevel;
+    }
+  }
+
+  if (data.isActive !== undefined) {
+    data.isActive = Boolean(data.isActive);
+  }
+
+  return data;
+}
 
 exports.getAllIdeas = async (req, res) => {
     try {
@@ -19,7 +48,7 @@ exports.getAllIdeas = async (req, res) => {
 
 exports.createIdea = async (req, res) => {
     try {
-        const ideas = await BusinessIdea.create(req.body);
+        const ideas = await BusinessIdea.create(normalizeIdeaPayload(req.body));
 
         res.status(201).json({
             success: true,
@@ -28,7 +57,7 @@ exports.createIdea = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Failed to create business idea"
+            message: error.message || "Failed to create business idea"
         });
     }   
 };
@@ -76,6 +105,16 @@ exports.toggleFavorite = async (req, res) => {
             isFavorited = false;
         }
         await user.save();
+
+        if (isFavorited) {
+            await createNotification(
+                user._id,
+                "IDEA_FAVORITED",
+                "Idea Bookmarked",
+                `"${idea.name}" has been saved to your favorites.`,
+                "/recommendations"
+            );
+        }
 
         res.status(200).json({ success: true, isFavorited, favoriteCount: user.favoriteIdeas.length });
     } catch (error) {
@@ -151,6 +190,21 @@ exports.getSkillGap = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to compute skill gap" });
+    }
+};
+
+// Update idea (admin) — PUT /business-ideas/:id
+exports.updateIdea = async (req, res) => {
+    try {
+        const idea = await BusinessIdea.findByIdAndUpdate(
+            req.params.id,
+            normalizeIdeaPayload(req.body),
+            { new: true, runValidators: true }
+        );
+        if (!idea) return res.status(404).json({ success: false, message: "Business idea not found" });
+        res.status(200).json({ success: true, idea });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message || "Failed to update business idea" });
     }
 };
 

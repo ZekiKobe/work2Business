@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   FileText, Trash2, Eye, Zap, Wrench, Calendar, TrendingUp,
-  Search, LayoutGrid, LayoutList, AlertTriangle
+  Search, LayoutGrid, LayoutList, AlertTriangle, Heart
 } from "lucide-react";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -14,7 +14,7 @@ import EmptyState from "../../components/common/EmptyState";
 import { SkeletonCard } from "../../components/common/Skeleton";
 import api from "../../api/axios";
 
-function PlanCard({ plan, onDelete, isDeleting, view }) {
+function PlanCard({ plan, onDelete, isDeleting, view, onToggleFavorite }) {
   const idea = plan.businessIdea;
   const isAI = plan.source === "AI";
   const riskColor = { LOW: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25", MEDIUM: "text-amber-400 bg-amber-500/10 border-amber-500/25", HIGH: "text-red-400 bg-red-500/10 border-red-500/25" }[idea?.riskLevel] || "text-slate-400 bg-slate-800 border-slate-700";
@@ -40,6 +40,17 @@ function PlanCard({ plan, onDelete, isDeleting, view }) {
             <span className="text-xs font-bold text-indigo-400">{plan.successProbability}%</span>
           )}
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskColor}`}>{idea?.riskLevel}</span>
+          <button
+            onClick={() => onToggleFavorite?.(plan._id)}
+            title={plan.isFavorited ? "Remove from favorites" : "Save to favorites"}
+            className={`p-1.5 rounded-lg transition-colors ${
+              plan.isFavorited
+                ? "text-pink-400 bg-pink-500/10 hover:bg-pink-500/15"
+                : "text-slate-600 hover:text-pink-400 hover:bg-pink-500/10"
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${plan.isFavorited ? "fill-current" : ""}`} />
+          </button>
           <Link to={`/plans/${plan._id}`} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
             <Eye className="w-3.5 h-3.5" />
           </Link>
@@ -105,6 +116,17 @@ function PlanCard({ plan, onDelete, isDeleting, view }) {
           <Eye className="w-3.5 h-3.5" /> View Plan
         </Link>
         <button
+          onClick={() => onToggleFavorite?.(plan._id)}
+          title={plan.isFavorited ? "Remove from favorites" : "Save to favorites"}
+          className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+            plan.isFavorited
+              ? "border-pink-500/30 text-pink-400 bg-pink-500/10 hover:bg-pink-500/15"
+              : "btn-secondary px-3 py-2"
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${plan.isFavorited ? "fill-current" : ""}`} />
+        </button>
+        <button
           onClick={() => onDelete(plan._id)}
           disabled={isDeleting}
           className="btn-danger text-xs px-3 py-2"
@@ -115,6 +137,8 @@ function PlanCard({ plan, onDelete, isDeleting, view }) {
     </motion.div>
   );
 }
+
+export { PlanCard };
 
 export default function Plans() {
   const queryClient = useQueryClient();
@@ -133,10 +157,23 @@ export default function Plans() {
     onSuccess: () => {
       toast.success("Plan deleted");
       queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries(["favorite-plans"]);
       queryClient.invalidateQueries(["dashboard-stats"]);
     },
     onError: () => toast.error("Failed to delete plan"),
     onSettled: () => setDeletingId(null)
+  });
+
+  const { mutate: toggleFavorite } = useMutation({
+    mutationFn: (id) => api.post(`/business-plans/${id}/favorite`),
+    onSuccess: (res, id) => {
+      const favorited = res.data.isFavorited;
+      toast.success(favorited ? "Saved to favorites" : "Removed from favorites");
+      queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries(["favorite-plans"]);
+      queryClient.invalidateQueries(["plan", id]);
+    },
+    onError: () => toast.error("Failed to update favorite")
   });
 
   const plans = data || [];
@@ -196,7 +233,14 @@ export default function Plans() {
         <motion.div layout className={view === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-2"}>
           <AnimatePresence mode="popLayout">
             {filtered.map((plan) => (
-              <PlanCard key={plan._id} plan={plan} view={view} onDelete={deletePlan} isDeleting={deletingId === plan._id} />
+              <PlanCard
+                key={plan._id}
+                plan={plan}
+                view={view}
+                onDelete={deletePlan}
+                isDeleting={deletingId === plan._id}
+                onToggleFavorite={toggleFavorite}
+              />
             ))}
           </AnimatePresence>
         </motion.div>

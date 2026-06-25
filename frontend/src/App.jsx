@@ -10,8 +10,11 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Recommendations from "./pages/recommendations/Recommendation";
 import Plans from "./pages/plans/plans";
+import FavoritePlans from "./pages/plans/FavoritePlans";
 import PlanDetails from "./pages/plans/PlanDetails";
 import Profile from "./pages/profile/profile";
+import Settings from "./pages/settings/Settings";
+import AdminPanel from "./pages/admin/AdminPanel";
 
 function LoadingScreen() {
   return (
@@ -52,8 +55,11 @@ export default function App() {
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/recommendations" element={<PrivateRoute><Recommendations /></PrivateRoute>} />
         <Route path="/plans" element={<PrivateRoute><Plans /></PrivateRoute>} />
+        <Route path="/favorites" element={<PrivateRoute><FavoritePlans /></PrivateRoute>} />
         <Route path="/plans/:id" element={<PrivateRoute><PlanDetails /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+        <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -9,35 +9,58 @@ import {
   LogOut,
   Building2,
   ChevronRight,
-  TrendingUp
+  Settings,
+  ShieldCheck,
+  Heart,
+  X
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 
 const MENU = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", desc: "Overview & stats" },
-  { name: "Recommendations", icon: Lightbulb, path: "/recommendations", desc: "Business ideas for you" },
-  { name: "Business Plans", icon: FileText, path: "/plans", desc: "Your generated plans" },
-  { name: "Profile", icon: User, path: "/profile", desc: "Manage your profile" }
+  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { name: "Recommendations", icon: Lightbulb, path: "/recommendations" },
+  { name: "Business Plans", icon: FileText, path: "/plans" },
+  { name: "Favorites", icon: Heart, path: "/favorites" },
+  { name: "Profile", icon: User, path: "/profile" },
+  { name: "Settings", icon: Settings, path: "/settings" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = false, onClose }) {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const completeness = user?.profileCompleteness ?? 0;
 
+  const handleNavClick = () => {
+    if (window.innerWidth < 1024) onClose?.();
+  };
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f1e] border-r border-slate-800/60 flex flex-col z-40 shadow-2xl">
+    <aside
+      className={`fixed left-0 top-0 h-screen w-64 bg-[#0a0f1e] border-r border-slate-800/60 flex flex-col z-40 shadow-2xl transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       {/* Brand */}
       <div className="px-5 py-5 border-b border-slate-800/60">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-glow-sm">
-            <Building2 className="text-white w-4 h-4" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-glow-sm shrink-0">
+              <Building2 className="text-white w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-sm font-bold text-white tracking-tight block">Work2Business</span>
+              <span className="text-[10px] text-indigo-400 font-medium uppercase tracking-widest">E2B Platform</span>
+            </div>
           </div>
-          <div>
-            <span className="text-sm font-bold text-white tracking-tight block">Work2Business</span>
-            <span className="text-[10px] text-indigo-400 font-medium uppercase tracking-widest">E2B Platform</span>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="lg:hidden p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors shrink-0"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -80,6 +103,7 @@ export default function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
                 ${isActive
@@ -102,6 +126,27 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Admin link */}
+      {user?.role === "ADMIN" && (
+        <div className="px-3 pb-2 border-t border-slate-800/60 pt-2">
+          <p className="px-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Admin</p>
+          <NavLink
+            to="/admin"
+            onClick={handleNavClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
+              ${isActive
+                ? "bg-amber-500/15 text-amber-300 border border-amber-500/25"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent"
+              }`
+            }
+          >
+            <ShieldCheck className="w-4 h-4 shrink-0 text-amber-400" />
+            Admin Panel
+          </NavLink>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="p-3 border-t border-slate-800/60 space-y-1">

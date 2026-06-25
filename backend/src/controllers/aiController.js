@@ -3,6 +3,8 @@ const BusinessPlan = require("../models/BusinessPlan");
 const User = require("../models/User");
 const { generateAIPlan, generateBusinessNames } = require("../services/aiService");
 const { generateBusinessPlan } = require("../services/businessPlanService");
+const { createNotification } = require("./notificationController");
+const { sendPlanGeneratedEmail } = require("../services/emailService");
 
 exports.generatePlan = async (req, res) => {
   try {
@@ -48,6 +50,20 @@ exports.generatePlan = async (req, res) => {
     });
 
     const populated = await savedPlan.populate("businessIdea");
+
+    // Trigger notification and email
+    await createNotification(
+      req.user._id,
+      "PLAN_GENERATED",
+      "Business Plan Ready",
+      `Your ${source === "AI" ? "AI-powered" : ""} business plan for "${idea.name}" has been generated.`,
+      `/plans/${savedPlan._id}`
+    );
+
+    const fullUser = await User.findById(req.user._id);
+    if (fullUser?.preferences?.emailOnPlan) {
+      sendPlanGeneratedEmail(fullUser, savedPlan.title, idea.name).catch(() => {});
+    }
 
     res.status(201).json({
       success: true,
