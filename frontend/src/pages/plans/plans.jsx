@@ -1,211 +1,206 @@
-import { useEffect, useState, useMemo } from "react";
-import DashboardLayout from "../../layouts/DashboardLayout";
-
-import api from "../../api/axios";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import {
+  FileText, Trash2, Eye, Zap, Wrench, Calendar, TrendingUp,
+  Search, LayoutGrid, LayoutList, AlertTriangle
+} from "lucide-react";
 
-import PlanCard from "../../components/plans/PlanCard";
+import DashboardLayout from "../../layouts/DashboardLayout";
+import PageHeader from "../../components/common/PageHeader";
+import EmptyState from "../../components/common/EmptyState";
+import { SkeletonCard } from "../../components/common/Skeleton";
+import api from "../../api/axios";
+
+function PlanCard({ plan, onDelete, isDeleting, view }) {
+  const idea = plan.businessIdea;
+  const isAI = plan.source === "AI";
+  const riskColor = { LOW: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25", MEDIUM: "text-amber-400 bg-amber-500/10 border-amber-500/25", HIGH: "text-red-400 bg-red-500/10 border-red-500/25" }[idea?.riskLevel] || "text-slate-400 bg-slate-800 border-slate-700";
+
+  if (view === "list") {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, scale: 0.97 }}
+        className="glass rounded-xl px-5 py-4 flex items-center gap-4 hover:border-slate-700/80 transition-all group"
+      >
+        <div className={`p-2.5 rounded-xl border ${isAI ? "bg-indigo-500/10 border-indigo-500/20" : "bg-slate-800 border-slate-700"}`}>
+          {isAI ? <Zap className="w-4 h-4 text-indigo-400" /> : <Wrench className="w-4 h-4 text-slate-400" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-white text-sm truncate">{plan.title || idea?.name || "Business Plan"}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{idea?.category} • {new Date(plan.createdAt).toLocaleDateString()}</p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {plan.successProbability > 0 && (
+            <span className="text-xs font-bold text-indigo-400">{plan.successProbability}%</span>
+          )}
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskColor}`}>{idea?.riskLevel}</span>
+          <Link to={`/plans/${plan._id}`} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+            <Eye className="w-3.5 h-3.5" />
+          </Link>
+          <button onClick={() => onDelete(plan._id)} disabled={isDeleting} className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      className="glass rounded-2xl p-5 hover:border-slate-700/80 transition-all group flex flex-col"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className={`p-2.5 rounded-xl border ${isAI ? "bg-indigo-500/10 border-indigo-500/20" : "bg-slate-800 border-slate-700"}`}>
+          {isAI ? <Zap className="w-4 h-4 text-indigo-400" /> : <Wrench className="w-4 h-4 text-slate-400" />}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isAI ? "bg-indigo-500/10 border-indigo-500/25 text-indigo-400" : "bg-slate-800 border-slate-700 text-slate-500"}`}>
+            {isAI ? "AI Generated" : "Manual"}
+          </span>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskColor}`}>{idea?.riskLevel}</span>
+        </div>
+      </div>
+
+      <h3 className="font-bold text-white text-sm leading-tight mb-1">{plan.title || idea?.name || "Business Plan"}</h3>
+      <p className="text-xs text-slate-500 mb-3">{idea?.category}</p>
+
+      {plan.executiveSummary && (
+        <p className="text-xs text-slate-400 leading-relaxed line-clamp-3 flex-1 mb-4">
+          {typeof plan.executiveSummary === "string" ? plan.executiveSummary.slice(0, 150) + "..." : ""}
+        </p>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-4 pt-3 border-t border-slate-800/60">
+        {plan.successProbability > 0 && (
+          <div className="text-center">
+            <p className="text-xs font-bold text-indigo-400">{plan.successProbability}%</p>
+            <p className="text-[10px] text-slate-600">Success</p>
+          </div>
+        )}
+        {plan.projectedRevenue > 0 && (
+          <div className="text-center">
+            <p className="text-xs font-bold text-emerald-400">{(plan.projectedRevenue / 1000).toFixed(0)}K</p>
+            <p className="text-[10px] text-slate-600">Revenue</p>
+          </div>
+        )}
+        <div className="text-center">
+          <p className="text-xs font-bold text-slate-300">{new Date(plan.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+          <p className="text-[10px] text-slate-600">Created</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 mt-auto">
+        <Link to={`/plans/${plan._id}`} className="btn-primary text-xs flex-1 justify-center py-2">
+          <Eye className="w-3.5 h-3.5" /> View Plan
+        </Link>
+        <button
+          onClick={() => onDelete(plan._id)}
+          disabled={isDeleting}
+          className="btn-danger text-xs px-3 py-2"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function Plans() {
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("list");
+  const [view, setView] = useState("grid");
+  const [deletingId, setDeletingId] = useState(null);
 
-  useEffect(() => {
-    let mounted = true;
+  const { data, isLoading } = useQuery({
+    queryKey: ["plans"],
+    queryFn: () => api.get("/business-plans").then((r) => r.data.data)
+  });
 
-    const loadPlans = async () => {
-      try {
-        setLoading(true);
-
-        const res = await api.get("/business-plans");
-
-        console.log("PLANS RESPONSE:", res.data);
-
-        if (!mounted) return;
-
-        const data = res.data?.data;
-
-        setPlans(Array.isArray(data) ? data : []);
-
-      } catch {
-        if (mounted) toast.error("Failed to load plans");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    loadPlans();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const deletePlan = async (id) => {
-    try {
-      await api.delete(`/business-plans/${id}`);
-
+  const { mutate: deletePlan } = useMutation({
+    mutationFn: (id) => api.delete(`/business-plans/${id}`),
+    onMutate: (id) => setDeletingId(id),
+    onSuccess: () => {
       toast.success("Plan deleted");
+      queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries(["dashboard-stats"]);
+    },
+    onError: () => toast.error("Failed to delete plan"),
+    onSettled: () => setDeletingId(null)
+  });
 
-      setPlans(prev => prev.filter(p => p._id !== id));
-
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
-
-  const filteredPlans = useMemo(() => {
-    if (!Array.isArray(plans)) return [];
-
-    return plans.filter(plan => {
-      const text =
-        plan.title ||
-        plan.businessIdea?.name ||
-        plan.executiveSummary ||
-        "";
-
-      return text.toLowerCase().includes(search.toLowerCase());
-    });
-  }, [plans, search]);
+  const plans = data || [];
+  const filtered = plans.filter((p) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (p.title?.toLowerCase().includes(q) || p.businessIdea?.name?.toLowerCase().includes(q) || p.businessIdea?.category?.toLowerCase().includes(q));
+  });
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-slate-950 text-slate-100 p-1">
-
-        {/* HEADER */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">E2B Business Plans</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Manage all your enterprise-extracted business roadmaps
-            </p>
+      <PageHeader
+        title="Business Plans"
+        subtitle={`${plans.length} plan${plans.length !== 1 ? "s" : ""} generated`}
+        badge="My Plans"
+        actions={
+          <div className="flex gap-2">
+            <button onClick={() => setView("grid")} className={`p-2 rounded-lg border transition-colors ${view === "grid" ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400" : "btn-secondary p-2"}`}>
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button onClick={() => setView("list")} className={`p-2 rounded-lg border transition-colors ${view === "list" ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400" : "btn-secondary p-2"}`}>
+              <LayoutList className="w-4 h-4" />
+            </button>
           </div>
+        }
+      />
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search blueprints..."
-              className="px-4 py-2 bg-slate-900 border border-slate-800 focus:border-slate-700 focus:outline-none rounded-lg w-full sm:w-64 text-sm text-slate-200 placeholder-slate-500 transition-colors"
-            />
-
-            <div className="flex gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-900">
-              <button
-                onClick={() => setView("list")}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  view === "list" 
-                    ? "bg-blue-600 text-white shadow-md" 
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                List
-              </button>
-
-              <button
-                onClick={() => setView("grid")}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  view === "grid" 
-                    ? "bg-blue-600 text-white shadow-md" 
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                Cards
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* LOADING SKELETONS */}
-        {loading && (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map(i => (
-              <div
-                key={i}
-                className="h-16 bg-slate-900/40 border border-slate-900/60 animate-pulse rounded-xl"
-              />
-            ))}
-          </div>
-        )}
-
-        {/* EMPTY STATE */}
-        {!loading && filteredPlans.length === 0 && (
-          <div className="text-center py-20 border border-slate-900 rounded-2xl bg-slate-900/10 backdrop-blur-md">
-            <h3 className="text-lg font-semibold text-slate-300">
-              No plan architectures found
-            </h3>
-            <p className="text-slate-500 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-              Generate a new venture plan from your recommendations profile to initialize your stack.
-            </p>
-          </div>
-        )}
-
-        {/* LIST VIEW */}
-        {!loading && view === "list" && filteredPlans.length > 0 && (
-          <div className="bg-slate-900/20 border border-slate-900 rounded-2xl overflow-hidden shadow-xl">
-            {filteredPlans.map((plan, index) => (
-              <div
-                key={plan._id}
-                className={`flex flex-col md:grid md:grid-cols-3 items-center gap-4 p-5 hover:bg-slate-900/40 transition-colors ${
-                  index !== 0 ? "border-t border-slate-900" : ""
-                }`}
-              >
-                {/* TITLE & SUMMARY */}
-                <div className="w-full">
-                  <h3 className="font-semibold text-white tracking-tight text-sm sm:text-base">
-                    {plan.title || plan.businessIdea?.name || "Business Blueprint"}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                    {plan.executiveSummary || "AI Transition Blueprint Dynamic Generation Asset"}
-                  </p>
-                </div>
-
-                {/* ORIGIN SOURCE BADGES */}
-                <div className="w-full flex md:justify-start">
-                  <span className={`px-2.5 py-1 text-[11px] font-medium rounded-full border ${
-                    (plan.source || "ai") === "ai"
-                      ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                      : "bg-slate-800/40 text-slate-400 border-slate-800"
-                  }`}>
-                    {(plan.source || "ai") === "ai" ? "AI Generated Asset" : "Manual Integration"}
-                  </span>
-                </div>
-
-                {/* ACTION BUTTONS */}
-                <div className="w-full flex gap-2 md:justify-end">
-                  <a
-                    href={`/plans/${plan._id}`}
-                    className="px-3 py-1.5 text-xs font-medium border border-slate-800 bg-slate-900/40 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-white rounded-lg transition-all"
-                  >
-                    View Stack
-                  </a>
-                  <button
-                    onClick={() => deletePlan(plan._id)}
-                    className="px-3 py-1.5 text-xs font-medium text-rose-400 border border-transparent hover:border-rose-500/20 hover:bg-rose-500/10 rounded-lg transition-all"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* GRID VIEW */}
-        {!loading && view === "grid" && (
-          <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredPlans.map(plan => (
-              <PlanCard
-                key={plan._id}
-                plan={plan}
-                onDelete={deletePlan}
-              />
-            ))}
-          </div>
-        )}
-
+      {/* Search */}
+      <div className="relative mb-5">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search plans by name, category..."
+          className="input-base pl-10"
+        />
       </div>
+
+      {isLoading ? (
+        <div className={view === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-2"}>
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title={search ? "No plans match your search" : "No business plans yet"}
+          description={search ? "Try a different search term." : "Go to Recommendations to generate your first AI-powered business plan."}
+          action={
+            !search && (
+              <Link to="/recommendations" className="btn-primary text-sm">
+                <Zap className="w-4 h-4" /> Get Recommendations
+              </Link>
+            )
+          }
+        />
+      ) : (
+        <motion.div layout className={view === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-2"}>
+          <AnimatePresence mode="popLayout">
+            {filtered.map((plan) => (
+              <PlanCard key={plan._id} plan={plan} view={view} onDelete={deletePlan} isDeleting={deletingId === plan._id} />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
     </DashboardLayout>
   );
 }
