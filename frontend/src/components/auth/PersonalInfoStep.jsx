@@ -70,7 +70,23 @@ export default function PersonalInfoStep({ formData, setFormData }) {
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        <p className="text-xs text-slate-500 mt-1.5">Use at least 8 characters with uppercase, lowercase, and a number</p>
+        {formData.password && (
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {[
+              { label: "8+ chars", ok: formData.password.length >= 8 },
+              { label: "Uppercase", ok: /[A-Z]/.test(formData.password) },
+              { label: "Lowercase", ok: /[a-z]/.test(formData.password) },
+              { label: "Number", ok: /\d/.test(formData.password) },
+            ].map(({ label, ok }) => (
+              <span key={label} className={`text-[11px] font-medium ${ok ? "text-emerald-400" : "text-slate-600"}`}>
+                {ok ? "✓" : "○"} {label}
+              </span>
+            ))}
+          </div>
+        )}
+        {!formData.password && (
+          <p className="text-xs text-slate-500 mt-1.5">Must include uppercase, lowercase, and a number</p>
+        )}
       </div>
     </div>
   );

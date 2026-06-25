@@ -63,6 +63,10 @@ export default function Register() {
         if (!formData.lastName.trim()) { toast.error("Last name is required"); return false; }
         if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) { toast.error("Valid email is required"); return false; }
         if (!formData.password || formData.password.length < 8) { toast.error("Password must be at least 8 characters"); return false; }
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+          toast.error("Password must include an uppercase letter, a lowercase letter, and a number");
+          return false;
+        }
         break;
       case 2:
         if (!formData.profession.trim()) { toast.error("Profession is required"); return false; }

@@ -31,7 +31,6 @@ export const SKILLS = [
   "Negotiation",
   "Marketing",
   "IT Support",
-  "Networking",
   "Cybersecurity",
   "Cloud Services",
   "Cooking",
