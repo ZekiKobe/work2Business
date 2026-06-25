@@ -187,3 +187,65 @@ exports.getDashboardStats = async (req, res) => {
     });
   }
 };
+
+const DEFAULT_MILESTONES = [
+  { key: "complete_profile", title: "Complete your profile", description: "Fill in all profile fields including skills, interests, and capital.", order: 1 },
+  { key: "explore_recommendations", title: "Explore business matches", description: "View your AI-matched business recommendations and review your top score.", order: 2 },
+  { key: "bookmark_idea", title: "Bookmark a business idea", description: "Save at least one business idea to your favorites.", order: 3 },
+  { key: "analyze_skill_gap", title: "Analyze your skill gap", description: "Check the skill gap analysis for your top-matched business idea.", order: 4 },
+  { key: "compare_ideas", title: "Compare two ideas", description: "Use the comparison tool to decide between two business ideas.", order: 5 },
+  { key: "generate_ai_plan", title: "Generate an AI business plan", description: "Create your first AI-powered business plan with GPT-4o.", order: 6 },
+  { key: "generate_business_names", title: "Generate business names", description: "Use the AI name generator to get brand ideas for your chosen business.", order: 7 },
+  { key: "review_plan", title: "Review your full plan", description: "Read through all 8 sections of your generated business plan.", order: 8 },
+  { key: "refine_plan", title: "Generate a second plan", description: "Iterate — create a second plan for a different idea or improved profile.", order: 9 },
+  { key: "ready_to_launch", title: "Declare launch readiness", description: "Mark yourself as ready to begin the real-world steps of launching.", order: 10 }
+];
+
+exports.getMilestones = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    // Initialize milestones if empty
+    if (!user.milestones || user.milestones.length === 0) {
+      user.milestones = DEFAULT_MILESTONES.map(m => ({ ...m, completed: false }));
+      await user.save();
+    }
+
+    const completed = user.milestones.filter(m => m.completed).length;
+    const total = user.milestones.length;
+
+    res.status(200).json({
+      success: true,
+      milestones: user.milestones,
+      completedCount: completed,
+      totalCount: total,
+      progressPercent: Math.round((completed / total) * 100)
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch milestones" });
+  }
+};
+
+exports.toggleMilestone = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const { key } = req.params;
+
+    const milestone = user.milestones.find(m => m.key === key);
+    if (!milestone) {
+      return res.status(404).json({ success: false, message: "Milestone not found" });
+    }
+
+    milestone.completed = !milestone.completed;
+    milestone.completedAt = milestone.completed ? new Date() : undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      milestone,
+      completedCount: user.milestones.filter(m => m.completed).length
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to toggle milestone" });
+  }
+};

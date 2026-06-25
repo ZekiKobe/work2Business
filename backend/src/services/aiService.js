@@ -93,3 +93,46 @@ Generate a comprehensive, actionable business plan. Return ONLY valid JSON with 
     throw new Error("AI generation failed. Please try again or use manual plan.");
   }
 };
+
+exports.generateBusinessNames = async (user, idea) => {
+  const prompt = `You are a creative branding expert. Generate exactly 5 unique, memorable, and professional business name ideas for a new business with the following details:
+
+Business Type: ${idea.name}
+Category: ${idea.category}
+Owner Background: ${user.profession || "Professional"} with ${(user.skills || []).slice(0, 3).join(", ")} skills
+Target Market: ${(idea.tags || []).join(", ") || "General"}
+
+Rules:
+- Each name should be short (1-3 words max), memorable, and easy to spell
+- Mix styles: some may be descriptive, some abstract, some founder-inspired
+- Avoid generic words like "Solutions", "Services", "Group" unless creatively used
+- Return ONLY a valid JSON array of 5 strings, no extra text
+
+Example output: ["BridgePoint", "ClearPath Consulting", "NovaEdge", "Nexgen Hub", "PeakWork"]`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.9,
+      max_tokens: 200
+    });
+
+    const content = response.choices[0].message.content.trim();
+    const cleaned = content.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+    const names = JSON.parse(cleaned);
+
+    if (!Array.isArray(names)) throw new Error("Expected array");
+    return names.slice(0, 5);
+  } catch (error) {
+    // Fallback names if AI fails
+    const prefix = idea.name.split(" ")[0];
+    return [
+      `${prefix}Pro`,
+      `${prefix} Hub`,
+      `${prefix}Edge`,
+      `Smart${prefix}`,
+      `${prefix} Ventures`
+    ];
+  }
+};

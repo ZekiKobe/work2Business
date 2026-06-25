@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const aiControoller = require('../controllers/aiController');
 
-router.post("/business-plan",authMiddleware.protect, aiControoller.generatePlan);
+router.post("/business-plan", authMiddleware.protect, aiControoller.generatePlan);
+router.post("/business-names", authMiddleware.protect, aiControoller.generateNames);
 
 module.exports = router;

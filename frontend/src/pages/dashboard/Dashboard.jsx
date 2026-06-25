@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -7,9 +7,10 @@ import {
 } from "recharts";
 import {
   TrendingUp, FileText, Lightbulb, DollarSign, User, ArrowRight,
-  CheckCircle2, AlertTriangle, Zap, Target
+  CheckCircle2, AlertTriangle, Zap, Target, Milestone, Circle
 } from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -55,6 +56,101 @@ function ActionItem({ icon: Icon, text, to, color }) {
       <span className="text-sm text-slate-300 group-hover:text-white transition-colors flex-1">{text}</span>
       <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 transition-colors" />
     </Link>
+  );
+}
+
+function MilestoneTracker() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["milestones"],
+    queryFn: () => api.get("/user/milestones").then(r => r.data),
+    staleTime: 1000 * 60
+  });
+
+  const { mutate: toggleMilestone } = useMutation({
+    mutationFn: (key) => api.patch(`/user/milestones/${key}/toggle`),
+    onMutate: async (key) => {
+      await queryClient.cancelQueries(["milestones"]);
+      const prev = queryClient.getQueryData(["milestones"]);
+      queryClient.setQueryData(["milestones"], old => {
+        if (!old) return old;
+        return {
+          ...old,
+          milestones: old.milestones.map(m => m.key === key ? { ...m, completed: !m.completed } : m)
+        };
+      });
+      return { prev };
+    },
+    onError: (err, key, context) => {
+      queryClient.setQueryData(["milestones"], context.prev);
+      toast.error("Failed to update milestone");
+    },
+    onSuccess: (res) => {
+      const m = res.data.milestone;
+      if (m.completed) toast.success(`✓ "${m.title}" completed!`);
+    },
+    onSettled: () => queryClient.invalidateQueries(["milestones"])
+  });
+
+  const milestones = data?.milestones || [];
+  const progressPercent = data?.progressPercent || 0;
+  const completedCount = data?.completedCount || 0;
+  const totalCount = data?.totalCount || 0;
+
+  return (
+    <div className="glass rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-bold text-white text-sm flex items-center gap-2">
+          <Milestone className="w-4 h-4 text-amber-400" /> Launch Milestone Tracker
+        </h3>
+        <span className="text-xs font-bold text-amber-400">{completedCount}/{totalCount}</span>
+      </div>
+      <p className="text-xs text-slate-500 mb-3">Complete each milestone to launch your business</p>
+
+      {/* Progress bar */}
+      <div className="mb-4">
+        <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+          <span>Progress</span>
+          <span className="font-semibold text-amber-400">{progressPercent}%</span>
+        </div>
+        <div className="h-1.5 bg-slate-800 rounded-full">
+          <motion.div
+            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">{[1,2,3,4].map(i=><div key={i} className="h-9 bg-slate-800 animate-pulse rounded-xl" />)}</div>
+      ) : (
+        <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+          {milestones.map((m) => (
+            <button
+              key={m.key}
+              onClick={() => toggleMilestone(m.key)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
+                m.completed
+                  ? "bg-amber-500/8 border border-amber-500/20"
+                  : "bg-slate-800/30 hover:bg-slate-800/60 border border-transparent hover:border-slate-700/40"
+              }`}
+            >
+              {m.completed ? (
+                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+              ) : (
+                <Circle className="w-4 h-4 text-slate-600 shrink-0 group-hover:text-slate-400 transition-colors" />
+              )}
+              <span className={`text-xs font-medium ${m.completed ? "line-through text-slate-500" : "text-slate-300 group-hover:text-white"} transition-colors`}>
+                {m.title}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -226,7 +322,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Bottom row ── */}
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid lg:grid-cols-3 gap-4">
         {/* Action items */}
         <div className="glass rounded-2xl p-5">
           <h3 className="font-bold text-white text-sm mb-1">Recommended Actions</h3>
@@ -244,6 +340,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Milestone tracker */}
+        <MilestoneTracker />
 
         {/* Top match */}
         <div className="glass rounded-2xl p-5">

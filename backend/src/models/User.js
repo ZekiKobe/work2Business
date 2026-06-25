@@ -76,7 +76,25 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: {
       type: Date,
       select: false
-    }
+    },
+
+    favoriteIdeas: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "BusinessIdea"
+      }
+    ],
+
+    milestones: [
+      {
+        key: { type: String, required: true },
+        title: { type: String, required: true },
+        description: { type: String, default: "" },
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date },
+        order: { type: Number, default: 0 }
+      }
+    ]
   },
   {
     timestamps: true

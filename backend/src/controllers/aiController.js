@@ -1,7 +1,7 @@
 const BusinessIdea = require("../models/BusinessIdea");
 const BusinessPlan = require("../models/BusinessPlan");
 const User = require("../models/User");
-const { generateAIPlan } = require("../services/aiService");
+const { generateAIPlan, generateBusinessNames } = require("../services/aiService");
 const { generateBusinessPlan } = require("../services/businessPlanService");
 
 exports.generatePlan = async (req, res) => {
@@ -60,5 +60,27 @@ exports.generatePlan = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+// POST /ai/business-names  { ideaId }
+exports.generateNames = async (req, res) => {
+  try {
+    const { ideaId } = req.body;
+    if (!ideaId) {
+      return res.status(400).json({ success: false, message: "ideaId is required" });
+    }
+    const idea = await BusinessIdea.findById(ideaId);
+    if (!idea) {
+      return res.status(404).json({ success: false, message: "Business idea not found" });
+    }
+    const user = await User.findById(req.user._id);
+
+    const names = await generateBusinessNames(user, idea);
+
+    res.status(200).json({ success: true, names });
+  } catch (error) {
+    console.error("Generate names error:", error);
+    res.status(500).json({ success: false, message: "Failed to generate business names" });
   }
 };
