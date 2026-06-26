@@ -54,9 +54,9 @@ export default function Register() {
       login(res.data);
       toast.success("Welcome to Work2Business! Let's build your future.");
       if (selectedPlan === "founder") {
-        navigate("/checkout?plan=founder");
+        navigate("/checkout?plan=founder", { replace: true });
       } else {
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }
     },
     onError: (err) => {

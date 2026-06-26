@@ -46,7 +46,7 @@ export default function Login() {
     onSuccess: (res) => {
       login(res.data);
       toast.success(`Welcome back, ${res.data.user?.firstName}!`);
-      navigate(getPostLoginPath(res.data));
+      navigate(getPostLoginPath(res.data), { replace: true });
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Login failed. Please try again.");

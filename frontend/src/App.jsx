@@ -25,6 +25,7 @@ import SecurityPage from "./pages/public/SecurityPage";
 import ContactPage from "./pages/public/ContactPage";
 import Checkout from "./pages/checkout/Checkout";
 import Billing from "./pages/billing/Billing";
+import { getAuthenticatedHome } from "./utils/authRoutes";
 
 function LoadingScreen() {
   return (
@@ -65,28 +66,46 @@ function AdminRoute({ children }) {
   return children;
 }
 
+function GuestRoute({ children }) {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return <LoadingScreen />;
+  if (user) {
+    return <Navigate to={getAuthenticatedHome(user)} replace />;
+  }
+  return children;
+}
+
 function PublicRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
   if (loading) return <LoadingScreen />;
   if (user) {
-    return <Navigate to={user.role === "ADMIN" ? "/admin" : "/dashboard"} replace />;
+    return <Navigate to={getAuthenticatedHome(user)} replace />;
   }
   return children;
+}
+
+function CatchAllRoute() {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return <LoadingScreen />;
+  if (user) {
+    return <Navigate to={getAuthenticatedHome(user)} replace />;
+  }
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<GuestRoute><Landing /></GuestRoute>} />
 
-        <Route path="/how-it-works" element={<HowItWorksPage />} />
-        <Route path="/features" element={<FeaturesPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-        <Route path="/terms" element={<TermsOfServicePage />} />
-        <Route path="/security" element={<SecurityPage />} />
-        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/how-it-works" element={<GuestRoute><HowItWorksPage /></GuestRoute>} />
+        <Route path="/features" element={<GuestRoute><FeaturesPage /></GuestRoute>} />
+        <Route path="/pricing" element={<GuestRoute><PricingPage /></GuestRoute>} />
+        <Route path="/privacy" element={<GuestRoute><PrivacyPolicyPage /></GuestRoute>} />
+        <Route path="/terms" element={<GuestRoute><TermsOfServicePage /></GuestRoute>} />
+        <Route path="/security" element={<GuestRoute><SecurityPage /></GuestRoute>} />
+        <Route path="/contact" element={<GuestRoute><ContactPage /></GuestRoute>} />
 
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
@@ -112,7 +131,7 @@ export default function App() {
           <Route path="invoices" element={<AdminPanel />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<CatchAllRoute />} />
       </Routes>
     </BrowserRouter>
   );

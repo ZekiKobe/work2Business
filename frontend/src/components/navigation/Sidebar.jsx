@@ -40,7 +40,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (

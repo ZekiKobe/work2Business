@@ -4,7 +4,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LogOut,
-  Building2,
   ChevronRight,
   ShieldCheck,
   X
@@ -23,7 +22,7 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -100,17 +99,6 @@ export default function AdminSidebar({ isOpen = false, onClose }) {
           );
         })}
       </nav>
-
-      <div className="px-3 pb-2 border-t border-slate-800/60 pt-2">
-        <NavLink
-          to="/"
-          onClick={handleNavClick}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 transition-all"
-        >
-          <Building2 className="w-4 h-4 shrink-0" />
-          Public site
-        </NavLink>
-      </div>
 
       <div className="p-3 border-t border-slate-800/60 space-y-1">
         <button
