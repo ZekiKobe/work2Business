@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
   Building2,
@@ -38,9 +38,18 @@ export default function Checkout() {
   const sub = user?.subscription;
   const alreadyActive = sub?.plan === "founder" && sub?.status === "active";
 
+  const { data: billingData } = useQuery({
+    queryKey: ["billing-details"],
+    queryFn: () => api.get("/payments/billing-details").then((r) => r.data.data),
+    enabled: !!user
+  });
+
+  const billing = billingData?.billingDetails || {};
+  const hasBillingDetails = Boolean(billing.fullName && billing.addressLine1);
+
   useEffect(() => {
     if (alreadyActive) {
-      navigate("/dashboard", { replace: true });
+      navigate("/billing", { replace: true });
     }
   }, [alreadyActive, navigate]);
 
@@ -53,7 +62,7 @@ export default function Checkout() {
         await refreshProfile();
       }
       toast.success("Payment confirmed! Welcome to Founder.");
-      navigate("/dashboard");
+      navigate("/billing?success=1");
     },
     onError: () => toast.error("Could not verify payment. Contact support if you were charged.")
   });
@@ -75,7 +84,7 @@ export default function Checkout() {
         updateUser({ ...user, subscription: res.data.subscription });
       }
       toast.success(res.data.mock ? "Payment simulated successfully (demo mode)" : "Payment successful!");
-      navigate("/dashboard");
+      navigate("/billing?success=1");
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Payment failed");
@@ -106,10 +115,29 @@ export default function Checkout() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-600/10 blur-[120px] pointer-events-none" />
 
       <div className="max-w-4xl mx-auto relative">
-        <Link to="/pricing" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to pricing
-        </Link>
+        <div className="flex flex-wrap items-center gap-4 mb-8">
+          <Link to="/pricing" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to pricing
+          </Link>
+          <Link to="/billing" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
+            Manage billing
+          </Link>
+        </div>
+
+        {!hasBillingDetails && (
+          <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-sm text-amber-200">
+            Add billing details for your invoice.{" "}
+            <Link to="/billing" className="underline font-medium hover:text-white">Go to Billing</Link>
+          </div>
+        )}
+
+        {hasBillingDetails && (
+          <div className="mb-6 px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-sm text-slate-400">
+            Billing to: <span className="text-slate-200">{billing.fullName}</span>
+            {billing.city ? ` · ${billing.city}` : ""}
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-5 gap-8">
           <motion.div

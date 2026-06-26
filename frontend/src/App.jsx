@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 
@@ -23,6 +23,7 @@ import TermsOfServicePage from "./pages/public/TermsOfServicePage";
 import SecurityPage from "./pages/public/SecurityPage";
 import ContactPage from "./pages/public/ContactPage";
 import Checkout from "./pages/checkout/Checkout";
+import Billing from "./pages/billing/Billing";
 
 function LoadingScreen() {
   return (
@@ -37,8 +38,12 @@ function LoadingScreen() {
 
 function PrivateRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
   if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+  }
   return children;
 }
 
@@ -76,6 +81,7 @@ export default function App() {
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
         <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+        <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
         <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

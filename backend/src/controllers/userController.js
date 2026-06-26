@@ -5,10 +5,12 @@ const BusinessIdea = require("../models/BusinessIdea");
 const { calculateScore } = require("../services/recommendationService");
 const { createNotification } = require("./notificationController");
 const { sendMilestoneEmail } = require("../services/emailService");
+const { syncSubscriptionStatus } = require("../constants/plans");
 
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
+    await syncSubscriptionStatus(user);
     res.status(200).json({
       success: true,
       user

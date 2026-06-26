@@ -260,7 +260,7 @@ export default function Register() {
 
           <p className="text-center mt-5 text-sm text-slate-500">
             Already have an account?{" "}
-            <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+            <Link to={`/login${selectedPlan === "founder" ? "?redirect=" + encodeURIComponent("/checkout?plan=founder") : ""}`} className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Sign in
             </Link>
           </p>

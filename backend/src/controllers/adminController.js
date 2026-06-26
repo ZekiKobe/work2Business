@@ -2,6 +2,8 @@ const User = require("../models/User");
 const BusinessIdea = require("../models/BusinessIdea");
 const BusinessPlan = require("../models/BusinessPlan");
 const Notification = require("../models/Notification");
+const Payment = require("../models/Payment");
+const Invoice = require("../models/Invoice");
 
 // GET /admin/stats
 exports.getStats = async (req, res) => {
@@ -319,5 +321,57 @@ exports.deletePlan = async (req, res) => {
     res.status(200).json({ success: true, message: "Plan permanently deleted" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to delete plan" });
+  }
+};
+
+// GET /admin/payments
+exports.getPayments = async (req, res) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [payments, total] = await Promise.all([
+      Payment.find()
+        .populate("user", "firstName lastName email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      Payment.countDocuments()
+    ]);
+
+    res.json({
+      success: true,
+      data: payments,
+      pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / Number(limit)) }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch payments" });
+  }
+};
+
+// GET /admin/invoices
+exports.getInvoices = async (req, res) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [invoices, total] = await Promise.all([
+      Invoice.find()
+        .populate("user", "firstName lastName email")
+        .sort({ issuedAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      Invoice.countDocuments()
+    ]);
+
+    res.json({
+      success: true,
+      data: invoices,
+      pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / Number(limit)) }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch invoices" });
   }
 };

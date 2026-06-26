@@ -12,6 +12,7 @@ const PAGE_TITLES = {
   "/plans": { title: "Business Plans", subtitle: "Your AI-generated business plans" },
   "/favorites": { title: "Favorite Plans", subtitle: "Saved plans for quick access" },
   "/profile": { title: "Profile", subtitle: "Manage your professional profile" },
+  "/billing": { title: "Billing", subtitle: "Subscription, invoices, and payment details" },
   "/settings": { title: "Settings", subtitle: "Account, notifications, and preferences" },
   "/admin": { title: "Admin Panel", subtitle: "Manage platform users, ideas, and plans" }
 };
@@ -168,6 +169,8 @@ export default function Topbar({ onMenuClick }) {
 
   const page = PAGE_TITLES[pathname] || { title: "Work2Business", subtitle: "" };
   const completeness = user?.profileCompleteness ?? 0;
+  const sub = user?.subscription;
+  const planLabel = sub?.plan === "founder" && sub?.status === "active" ? "Founder" : "Starter";
 
   return (
     <header className="h-16 bg-[#080d1a]/90 backdrop-blur-md border-b border-slate-800/60 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
@@ -198,6 +201,17 @@ export default function Topbar({ onMenuClick }) {
             <span className="text-xs text-amber-300 font-medium">Complete profile -{completeness}%</span>
           </Link>
         )}
+
+        <Link
+          to="/billing"
+          className={`hidden sm:inline-flex px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+            planLabel === "Founder"
+              ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/25 hover:bg-indigo-500/20"
+              : "bg-slate-800/80 text-slate-400 border border-slate-700/60 hover:text-slate-300"
+          }`}
+        >
+          {planLabel}
+        </Link>
 
         {/* Notification bell */}
         <NotificationBell />

@@ -109,6 +109,18 @@ const userSchema = new mongoose.Schema(
       weeklyDigest: { type: Boolean, default: false }
     },
 
+    billingDetails: {
+      fullName: { type: String, default: "" },
+      company: { type: String, default: "" },
+      phone: { type: String, default: "" },
+      addressLine1: { type: String, default: "" },
+      addressLine2: { type: String, default: "" },
+      city: { type: String, default: "" },
+      region: { type: String, default: "" },
+      country: { type: String, default: "Ethiopia" },
+      taxId: { type: String, default: "" }
+    },
+
     subscription: {
       plan: {
         type: String,
@@ -122,7 +134,9 @@ const userSchema = new mongoose.Schema(
       },
       expiresAt: { type: Date },
       paymentMethod: { type: String },
-      lastPaymentAt: { type: Date }
+      lastPaymentAt: { type: Date },
+      cancelAtPeriodEnd: { type: Boolean, default: false },
+      cancelledAt: { type: Date }
     }
   },
   {

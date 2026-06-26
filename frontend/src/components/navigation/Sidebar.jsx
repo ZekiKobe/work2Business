@@ -11,6 +11,7 @@ import {
   Building2,
   ChevronRight,
   Settings,
+  CreditCard,
   ShieldCheck,
   Heart,
   X
@@ -23,6 +24,7 @@ const MENU = [
   { name: "Business Plans", icon: FileText, path: "/plans" },
   { name: "Favorites", icon: Heart, path: "/favorites" },
   { name: "Profile", icon: User, path: "/profile" },
+  { name: "Billing", icon: CreditCard, path: "/billing" },
   { name: "Settings", icon: Settings, path: "/settings" },
 ];
 

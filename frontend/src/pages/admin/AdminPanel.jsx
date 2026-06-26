@@ -6,7 +6,7 @@ import { Navigate, Link } from "react-router-dom";
 import {
   Plus, Pencil, Trash2, Save, X, ShieldCheck, ChevronDown, ChevronUp,
   DollarSign, TrendingUp, Clock, AlertTriangle, Search, Users, FileText,
-  Lightbulb, LayoutDashboard, Eye, UserX, UserCheck, EyeOff, ExternalLink
+  Lightbulb, LayoutDashboard, Eye, UserX, UserCheck, EyeOff, ExternalLink, Receipt
 } from "lucide-react";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -19,6 +19,8 @@ const TABS = [
   { id: "ideas", label: "Business Ideas", icon: Lightbulb },
   { id: "users", label: "Users", icon: Users },
   { id: "plans", label: "Business Plans", icon: FileText },
+  { id: "payments", label: "Payments", icon: DollarSign },
+  { id: "invoices", label: "Invoices", icon: Receipt },
 ];
 
 const BLANK_IDEA = {
@@ -592,6 +594,81 @@ function PlansTab() {
   );
 }
 
+function PaymentsTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-payments"],
+    queryFn: () => api.get("/admin/payments", { params: { limit: 50 } }).then((r) => r.data.data)
+  });
+
+  const payments = data || [];
+
+  return (
+    <div>
+      {isLoading ? (
+        <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 glass rounded-xl animate-pulse bg-slate-800/40" />)}</div>
+      ) : payments.length === 0 ? (
+        <p className="text-sm text-slate-500">No payments recorded yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {payments.map((p) => (
+            <div key={p._id} className="glass rounded-xl px-4 py-3 flex flex-wrap items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">{p.currency} {p.amount?.toLocaleString()} · {p.plan}</p>
+                <p className="text-xs text-slate-500">
+                  {p.user?.firstName} {p.user?.lastName} · {p.user?.email}
+                </p>
+                <p className="text-[10px] text-slate-600 font-mono mt-1">{p.txRef}</p>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="capitalize text-slate-400">{p.method}</span>
+                <span className={`px-2 py-0.5 rounded-full ${p.status === "completed" ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>
+                  {p.status}
+                </span>
+                <span className="text-slate-600">{new Date(p.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InvoicesTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-invoices"],
+    queryFn: () => api.get("/admin/invoices", { params: { limit: 50 } }).then((r) => r.data.data)
+  });
+
+  const invoices = data || [];
+
+  return (
+    <div>
+      {isLoading ? (
+        <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 glass rounded-xl animate-pulse bg-slate-800/40" />)}</div>
+      ) : invoices.length === 0 ? (
+        <p className="text-sm text-slate-500">No invoices issued yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {invoices.map((inv) => (
+            <div key={inv._id} className="glass rounded-xl px-4 py-3 flex flex-wrap items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">{inv.invoiceNumber}</p>
+                <p className="text-xs text-slate-500">
+                  {inv.user?.firstName} {inv.user?.lastName} · {inv.user?.email}
+                </p>
+              </div>
+              <div className="text-xs text-slate-400">
+                {inv.currency} {inv.amount?.toLocaleString()} · {new Date(inv.issuedAt).toLocaleDateString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("overview");
@@ -602,7 +679,9 @@ export default function AdminPanel() {
     overview: <OverviewTab onNavigate={setActiveTab} />,
     ideas: <IdeasTab />,
     users: <UsersTab />,
-    plans: <PlansTab />
+    plans: <PlansTab />,
+    payments: <PaymentsTab />,
+    invoices: <InvoicesTab />
   };
 
   return (

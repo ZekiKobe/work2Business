@@ -13,6 +13,7 @@ import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { SkeletonCard } from "../../components/common/Skeleton";
 import api from "../../api/axios";
+import { showUpgradeToast } from "../../utils/upgradeToast";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -796,7 +797,13 @@ export default function Recommendations() {
       toast.success(isFav ? "Saved to favorites" : "Removed from favorites");
       queryClient.invalidateQueries(["favorites"]);
     },
-    onError: () => toast.error("Failed to update favorites")
+    onError: (err) => {
+      if (err.response?.data?.upgradeRequired) {
+        showUpgradeToast(err.response.data.message, navigate);
+      } else {
+        toast.error("Failed to update favorites");
+      }
+    }
   });
 
   // Generate plan
@@ -808,7 +815,13 @@ export default function Recommendations() {
       queryClient.invalidateQueries(["plans"]);
       navigate(`/plans/${res.data.data._id}`);
     },
-    onError: (err) => toast.error(err.response?.data?.message || "Failed to generate plan"),
+    onError: (err) => {
+      if (err.response?.data?.upgradeRequired) {
+        showUpgradeToast(err.response.data.message, navigate);
+      } else {
+        toast.error(err.response?.data?.message || "Failed to generate plan");
+      }
+    },
     onSettled: () => setGeneratingId(null)
   });
 

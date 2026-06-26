@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, FileText, Lightbulb, DollarSign, User, ArrowRight,
-  CheckCircle2, AlertTriangle, Zap, Target, Milestone, Circle
+  CheckCircle2, AlertTriangle, Zap, Target, Milestone, Circle, X, CreditCard
 } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -154,6 +154,84 @@ function MilestoneTracker() {
   );
 }
 
+function BillingBanner({ user }) {
+  const [dismissed, setDismissed] = useState(() =>
+    localStorage.getItem("billing-banner-dismissed") === "1"
+  );
+
+  const sub = user?.subscription;
+  if (!sub || dismissed) return null;
+
+  let banner = null;
+
+  if (sub.plan === "founder" && sub.status === "pending") {
+    banner = {
+      tone: "amber",
+      message: "Complete your Founder payment to unlock unlimited AI plans and bookmarks.",
+      cta: "Complete payment",
+      to: "/checkout?plan=founder"
+    };
+  } else if (sub.plan === "starter" || sub.status === "expired") {
+    banner = {
+      tone: "indigo",
+      message: "Upgrade to Founder for unlimited AI business plans, bookmarks, and PDF export.",
+      cta: "View plans",
+      to: "/billing"
+    };
+  } else if (sub.plan === "founder" && sub.status === "active") {
+    const expires = sub.expiresAt ? new Date(sub.expiresAt) : null;
+    const daysLeft = expires ? Math.ceil((expires - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+
+    if (sub.cancelAtPeriodEnd) {
+      banner = {
+        tone: "amber",
+        message: `Your Founder plan ends on ${expires?.toLocaleDateString()}. Reactivate anytime in Billing.`,
+        cta: "Manage billing",
+        to: "/billing"
+      };
+    } else if (daysLeft != null && daysLeft <= 30) {
+      banner = {
+        tone: "amber",
+        message: `Your Founder plan renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`,
+        cta: "Billing",
+        to: "/billing"
+      };
+    }
+  }
+
+  if (!banner) return null;
+
+  const tones = {
+    amber: "bg-amber-500/10 border-amber-500/25 text-amber-200",
+    indigo: "bg-indigo-500/10 border-indigo-500/25 text-indigo-200"
+  };
+
+  return (
+    <div className={`mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border ${tones[banner.tone]}`}>
+      <div className="flex items-start gap-2 text-sm">
+        <CreditCard className="w-4 h-4 shrink-0 mt-0.5" />
+        <span>{banner.message}</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Link to={banner.to} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/15 transition-colors">
+          {banner.cta}
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            localStorage.setItem("billing-banner-dismissed", "1");
+            setDismissed(true);
+          }}
+          className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+          aria-label="Dismiss"
+        >
+          <X className="w-4 h-4 opacity-60" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
 
@@ -179,6 +257,8 @@ export default function Dashboard() {
         subtitle="Your entrepreneurship journey at a glance"
         badge="Dashboard"
       />
+
+      <BillingBanner user={user} />
 
       {isError && (
         <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300">

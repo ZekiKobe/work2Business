@@ -14,5 +14,7 @@ router.delete("/users/:id", adminController.deleteUser);
 router.get("/plans", adminController.getPlans);
 router.patch("/plans/:id", adminController.updatePlan);
 router.delete("/plans/:id", adminController.deletePlan);
+router.get("/payments", adminController.getPayments);
+router.get("/invoices", adminController.getInvoices);
 
 module.exports = router;

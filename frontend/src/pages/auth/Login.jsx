@@ -1,11 +1,11 @@
 import { useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { Building2, Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
+import { Building2, Mail, Lock, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
@@ -14,6 +14,19 @@ import { loginSchema } from "../../schemas/loginSchema";
 export default function Login() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const getPostLoginPath = (data) => {
+    const sub = data?.user?.subscription;
+    if (sub?.plan === "founder" && sub?.status === "pending") {
+      return "/checkout?plan=founder";
+    }
+    const redirect = searchParams.get("redirect");
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      return redirect;
+    }
+    return "/dashboard";
+  };
 
   const {
     register,
@@ -26,7 +39,7 @@ export default function Login() {
     onSuccess: (res) => {
       login(res.data);
       toast.success(`Welcome back, ${res.data.user?.firstName}!`);
-      navigate("/dashboard");
+      navigate(getPostLoginPath(res.data));
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Login failed. Please try again.");
@@ -38,6 +51,14 @@ export default function Login() {
       {/* Background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-600/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-600/5 blur-[100px] pointer-events-none" />
+
+      <Link
+        to="/"
+        className="absolute top-6 left-6 flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors z-10"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to home
+      </Link>
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
