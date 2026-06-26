@@ -376,6 +376,79 @@ exports.deletePlan = async (req, res) => {
   }
 };
 
+// GET /admin/ideas/:id
+exports.getIdeaById = async (req, res) => {
+  try {
+    const idea = await BusinessIdea.findById(req.params.id).lean();
+    if (!idea) {
+      return res.status(404).json({ success: false, message: "Business idea not found" });
+    }
+    res.status(200).json({ success: true, data: idea });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch business idea" });
+  }
+};
+
+// GET /admin/plans/:id
+exports.getPlanById = async (req, res) => {
+  try {
+    const plan = await BusinessPlan.findById(req.params.id)
+      .populate("businessIdea")
+      .populate("user", "firstName lastName email role")
+      .lean();
+
+    if (!plan) {
+      return res.status(404).json({ success: false, message: "Plan not found" });
+    }
+
+    res.status(200).json({ success: true, data: plan });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch plan" });
+  }
+};
+
+// GET /admin/payments/:id
+exports.getPaymentById = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id)
+      .populate("user", "firstName lastName email role subscription")
+      .lean();
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found" });
+    }
+
+    const invoice = await Invoice.findOne({ payment: payment._id })
+      .select("_id invoiceNumber issuedAt")
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: { ...payment, invoice }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch payment" });
+  }
+};
+
+// GET /admin/invoices/:id
+exports.getInvoiceById = async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id)
+      .populate("user", "firstName lastName email")
+      .populate("payment", "txRef status amount currency method plan createdAt providerRef metadata")
+      .lean();
+
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: "Invoice not found" });
+    }
+
+    res.status(200).json({ success: true, data: invoice });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch invoice" });
+  }
+};
+
 // GET /admin/payments
 exports.getPayments = async (req, res) => {
   try {

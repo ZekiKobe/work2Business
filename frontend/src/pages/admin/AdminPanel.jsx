@@ -6,7 +6,7 @@ import { Navigate, Link, useLocation } from "react-router-dom";
 import {
   Plus, Pencil, Trash2, Save, X, ChevronDown, ChevronUp,
   DollarSign, TrendingUp, Clock, AlertTriangle, Search, Users, FileText,
-  Lightbulb, Eye, UserX, UserCheck, EyeOff, ExternalLink, Receipt
+  Lightbulb, Eye, UserX, UserCheck, EyeOff, Receipt
 } from "lucide-react";
 
 import { AuthContext } from "../../context/AuthContext";
@@ -265,6 +265,9 @@ function IdeasTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <Link to={`/admin/ideas/${idea._id}`} className="p-1.5 text-slate-500 hover:text-indigo-400 rounded-lg hover:bg-indigo-500/10" title="View details">
+                    <Eye className="w-4 h-4" />
+                  </Link>
                   <ToggleSwitch checked={idea.isActive !== false} onChange={(v) => toggleIdeaActive({ id: idea._id, isActive: v })} />
                   <button onClick={() => setExpandedId(expandedId === idea._id ? null : idea._id)} className="p-1.5 text-slate-500 hover:text-slate-300 rounded-lg hover:bg-slate-800/60">
                     {expandedId === idea._id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -379,6 +382,9 @@ function UsersTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <Link to={`/admin/users/${u._id}`} className="p-1.5 text-slate-500 hover:text-indigo-400 rounded-lg hover:bg-indigo-500/10" title="View details">
+                    <Eye className="w-4 h-4" />
+                  </Link>
                   <select
                     value={u.role}
                     disabled={isSelf}
@@ -494,8 +500,8 @@ function PlansTab() {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Link to={`/plans/${plan._id}`} className="p-1.5 text-slate-500 hover:text-indigo-400 rounded-lg hover:bg-indigo-500/10" title="View plan">
-                  <ExternalLink className="w-4 h-4" />
+                <Link to={`/admin/plans/${plan._id}`} className="p-1.5 text-slate-500 hover:text-indigo-400 rounded-lg hover:bg-indigo-500/10" title="View details">
+                  <Eye className="w-4 h-4" />
                 </Link>
                 <button
                   onClick={() => updatePlan({ id: plan._id, isActive: !plan.isActive })}
@@ -554,7 +560,10 @@ function PaymentsTab() {
                 </p>
                 <p className="text-[10px] text-slate-600 font-mono mt-1">{p.txRef}</p>
               </div>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-xs shrink-0">
+                <Link to={`/admin/payments/${p._id}`} className="p-1.5 text-slate-500 hover:text-indigo-400 rounded-lg hover:bg-indigo-500/10" title="View details">
+                  <Eye className="w-4 h-4" />
+                </Link>
                 <span className="capitalize text-slate-400">{p.method}</span>
                 <span className={`px-2 py-0.5 rounded-full ${p.status === "completed" ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>
                   {p.status}
@@ -593,8 +602,13 @@ function InvoicesTab() {
                   {inv.user?.firstName} {inv.user?.lastName} · {inv.user?.email}
                 </p>
               </div>
-              <div className="text-xs text-slate-400">
-                {inv.currency} {inv.amount?.toLocaleString()} · {new Date(inv.issuedAt).toLocaleDateString()}
+              <div className="flex items-center gap-3 shrink-0">
+                <Link to={`/admin/invoices/${inv._id}`} className="p-1.5 text-slate-500 hover:text-indigo-400 rounded-lg hover:bg-indigo-500/10" title="View details">
+                  <Eye className="w-4 h-4" />
+                </Link>
+                <div className="text-xs text-slate-400">
+                  {inv.currency} {inv.amount?.toLocaleString()} · {new Date(inv.issuedAt).toLocaleDateString()}
+                </div>
               </div>
             </div>
           ))}

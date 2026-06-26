@@ -15,6 +15,13 @@ import PlanDetails from "./pages/plans/PlanDetails";
 import Profile from "./pages/profile/profile";
 import Settings from "./pages/settings/Settings";
 import AdminPanel from "./pages/admin/AdminPanel";
+import {
+  AdminPaymentDetail,
+  AdminInvoiceDetail,
+  AdminUserDetail,
+  AdminIdeaDetail,
+  AdminPlanDetail
+} from "./pages/admin/AdminDetailPages";
 import AdminLayout from "./layouts/AdminLayout";
 import HowItWorksPage from "./pages/public/HowItWorksPage";
 import FeaturesPage from "./pages/public/FeaturesPage";
@@ -125,10 +132,15 @@ export default function App() {
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminPanel />} />
           <Route path="ideas" element={<AdminPanel />} />
+          <Route path="ideas/:id" element={<AdminIdeaDetail />} />
           <Route path="users" element={<AdminPanel />} />
+          <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="plans" element={<AdminPanel />} />
+          <Route path="plans/:id" element={<AdminPlanDetail />} />
           <Route path="payments" element={<AdminPanel />} />
+          <Route path="payments/:id" element={<AdminPaymentDetail />} />
           <Route path="invoices" element={<AdminPanel />} />
+          <Route path="invoices/:id" element={<AdminInvoiceDetail />} />
         </Route>
 
         <Route path="*" element={<CatchAllRoute />} />

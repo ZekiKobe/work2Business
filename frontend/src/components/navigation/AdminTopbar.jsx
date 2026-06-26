@@ -2,13 +2,12 @@ import { ShieldCheck, Menu } from "lucide-react";
 import { useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { ADMIN_PAGE_META, resolveAdminTab } from "../../constants/adminNav";
+import { getAdminPageMeta } from "../../constants/adminNav";
 
 export default function AdminTopbar({ onMenuClick }) {
   const { user } = useContext(AuthContext);
   const { pathname } = useLocation();
-  const tab = resolveAdminTab(pathname) || "overview";
-  const page = ADMIN_PAGE_META[tab] || ADMIN_PAGE_META.overview;
+  const page = getAdminPageMeta(pathname);
 
   return (
     <header className="h-16 bg-[#080d1a]/90 backdrop-blur-md border-b border-amber-900/20 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">

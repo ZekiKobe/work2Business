@@ -51,6 +51,25 @@ export const ADMIN_PAGE_META = {
 
 export function resolveAdminTab(pathname) {
   if (pathname === "/admin" || pathname === "/admin/") return "overview";
-  const match = ADMIN_MENU.find((item) => item.path !== "/admin" && pathname.startsWith(item.path));
+  const match = ADMIN_MENU.find((item) => {
+    if (item.path === "/admin") return false;
+    return pathname === item.path || pathname.startsWith(`${item.path}/`);
+  });
   return match?.id || null;
+}
+
+export function getAdminPageMeta(pathname) {
+  const detailMatch = pathname.match(/^\/admin\/(ideas|users|plans|payments|invoices)\/[^/]+$/);
+  if (detailMatch) {
+    const section = detailMatch[1];
+    const base = ADMIN_PAGE_META[section];
+    if (base) {
+      return {
+        title: `${base.title} · Details`,
+        subtitle: base.subtitle
+      };
+    }
+  }
+  const tab = resolveAdminTab(pathname) || "overview";
+  return ADMIN_PAGE_META[tab] || ADMIN_PAGE_META.overview;
 }
