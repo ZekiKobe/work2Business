@@ -18,12 +18,18 @@ export default function Login() {
   const [searchParams] = useSearchParams();
 
   const getPostLoginPath = (data) => {
+    if (data?.user?.role === "ADMIN") {
+      return "/admin";
+    }
     const sub = data?.user?.subscription;
     if (sub?.plan === "founder" && sub?.status === "pending") {
       return "/checkout?plan=founder";
     }
     const redirect = searchParams.get("redirect");
     if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      if (data?.user?.role === "ADMIN" && !redirect.startsWith("/admin")) {
+        return "/admin";
+      }
       return redirect;
     }
     return "/dashboard";

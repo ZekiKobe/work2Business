@@ -13,8 +13,7 @@ const PAGE_TITLES = {
   "/favorites": { title: "Favorite Plans", subtitle: "Saved plans for quick access" },
   "/profile": { title: "Profile", subtitle: "Manage your professional profile" },
   "/billing": { title: "Billing", subtitle: "Subscription, invoices, and payment details" },
-  "/settings": { title: "Settings", subtitle: "Account, notifications, and preferences" },
-  "/admin": { title: "Admin Panel", subtitle: "Manage platform users, ideas, and plans" }
+  "/settings": { title: "Settings", subtitle: "Account, notifications, and preferences" }
 };
 
 const NOTIF_ICONS = {

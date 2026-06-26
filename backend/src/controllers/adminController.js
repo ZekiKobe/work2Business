@@ -10,6 +10,9 @@ exports.getStats = async (req, res) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
     const [
       totalUsers,
@@ -19,7 +22,15 @@ exports.getStats = async (req, res) => {
       totalPlans,
       aiPlans,
       manualPlans,
-      plansThisMonth
+      plansThisMonth,
+      hiddenPlans,
+      founderUsers,
+      recentSignups,
+      completedPayments,
+      pendingPayments,
+      totalRevenueAgg,
+      monthlyPlans,
+      monthlyUsers
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ isActive: true }),
@@ -28,10 +39,43 @@ exports.getStats = async (req, res) => {
       BusinessPlan.countDocuments(),
       BusinessPlan.countDocuments({ source: "AI" }),
       BusinessPlan.countDocuments({ source: "MANUAL" }),
-      BusinessPlan.countDocuments({ createdAt: { $gte: startOfMonth } })
+      BusinessPlan.countDocuments({ createdAt: { $gte: startOfMonth } }),
+      BusinessPlan.countDocuments({ isActive: false }),
+      User.countDocuments({ "subscription.plan": "founder", "subscription.status": "active" }),
+      User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+      Payment.countDocuments({ status: "completed" }),
+      Payment.countDocuments({ status: "pending" }),
+      Payment.aggregate([
+        { $match: { status: "completed" } },
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ]),
+      BusinessPlan.aggregate([
+        { $match: { createdAt: { $gte: sixMonthsAgo } } },
+        { $group: { _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } }, count: { $sum: 1 } } }
+      ]),
+      User.aggregate([
+        { $match: { createdAt: { $gte: sixMonthsAgo } } },
+        { $group: { _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } }, count: { $sum: 1 } } }
+      ])
     ]);
 
-    const hiddenPlans = await BusinessPlan.countDocuments({ isActive: false });
+    const monthlyActivity = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const planRow = monthlyPlans.find((m) => m._id.year === year && m._id.month === month);
+      const userRow = monthlyUsers.find((m) => m._id.year === year && m._id.month === month);
+      monthlyActivity.push({
+        month: monthNames[month - 1],
+        plans: planRow?.count || 0,
+        users: userRow?.count || 0
+      });
+    }
+
+    const totalRevenue = totalRevenueAgg[0]?.total || 0;
+    const activeRate = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
+    const ideaActiveRate = totalIdeas > 0 ? Math.round((activeIdeas / totalIdeas) * 100) : 0;
 
     res.status(200).json({
       success: true,
@@ -47,7 +91,15 @@ exports.getStats = async (req, res) => {
         hiddenPlans,
         aiPlans,
         manualPlans,
-        plansThisMonth
+        plansThisMonth,
+        founderUsers,
+        recentSignups,
+        completedPayments,
+        pendingPayments,
+        totalRevenue,
+        activeRate,
+        ideaActiveRate,
+        monthlyActivity
       }
     });
   } catch (error) {

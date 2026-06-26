@@ -1,28 +1,19 @@
-import { useContext, useState } from "react";
+import { useState, useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate, Link, useLocation } from "react-router-dom";
 import {
-  Plus, Pencil, Trash2, Save, X, ShieldCheck, ChevronDown, ChevronUp,
+  Plus, Pencil, Trash2, Save, X, ChevronDown, ChevronUp,
   DollarSign, TrendingUp, Clock, AlertTriangle, Search, Users, FileText,
-  Lightbulb, LayoutDashboard, Eye, UserX, UserCheck, EyeOff, ExternalLink, Receipt
+  Lightbulb, Eye, UserX, UserCheck, EyeOff, ExternalLink, Receipt
 } from "lucide-react";
 
-import DashboardLayout from "../../layouts/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { PLACEHOLDERS } from "../../constants/placeholders";
-
-const TABS = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "ideas", label: "Business Ideas", icon: Lightbulb },
-  { id: "users", label: "Users", icon: Users },
-  { id: "plans", label: "Business Plans", icon: FileText },
-  { id: "payments", label: "Payments", icon: DollarSign },
-  { id: "invoices", label: "Invoices", icon: Receipt },
-];
+import { resolveAdminTab } from "../../constants/adminNav";
+import AdminOverview from "./AdminOverview";
 
 const BLANK_IDEA = {
   name: "",
@@ -191,63 +182,6 @@ function ConfirmDeleteModal({ title, message, confirmLabel, onConfirm, onClose, 
           <button onClick={onClose} className="btn-secondary text-sm flex-1">Cancel</button>
         </div>
       </motion.div>
-    </div>
-  );
-}
-
-function OverviewTab({ onNavigate }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-stats"],
-    queryFn: () => api.get("/admin/stats").then((r) => r.data.data)
-  });
-
-  const stats = data || {};
-
-  const cards = [
-    { label: "Total Users", value: stats.totalUsers ?? 0, sub: `${stats.activeUsers ?? 0} active`, icon: Users, color: "text-blue-400", bg: "bg-blue-500/10" },
-    { label: "Business Ideas", value: stats.totalIdeas ?? 0, sub: `${stats.activeIdeas ?? 0} active`, icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10" },
-    { label: "Business Plans", value: stats.totalPlans ?? 0, sub: `${stats.plansThisMonth ?? 0} this month`, icon: FileText, color: "text-purple-400", bg: "bg-purple-500/10" },
-    { label: "AI Plans", value: stats.aiPlans ?? 0, sub: `${stats.manualPlans ?? 0} manual`, icon: TrendingUp, color: "text-indigo-400", bg: "bg-indigo-500/10" },
-  ];
-
-  return (
-    <div className="space-y-6">
-      {isLoading ? (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 glass rounded-2xl animate-pulse bg-slate-800/40" />)}
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {cards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div key={card.label} className="glass rounded-2xl p-5">
-                <div className={`p-2.5 rounded-xl ${card.bg} mb-3`}>
-                  <Icon className={`w-4 h-4 ${card.color}`} />
-                </div>
-                <p className="text-2xl font-bold text-white">{card.value}</p>
-                <p className="text-xs text-slate-500 mt-1">{card.label}</p>
-                <p className="text-xs text-slate-600">{card.sub}</p>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="glass rounded-2xl p-5">
-        <h3 className="text-sm font-bold text-white mb-3">Quick Actions</h3>
-        <div className="grid sm:grid-cols-3 gap-2">
-          {[
-            { label: "Manage Ideas", tab: "ideas" },
-            { label: "Manage Users", tab: "users" },
-            { label: "Manage Plans", tab: "plans" },
-          ].map(({ label, tab }) => (
-            <button key={tab} onClick={() => onNavigate(tab)} className="btn-secondary text-sm justify-center py-2.5">
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -671,13 +605,18 @@ function InvoicesTab() {
 }
 
 export default function AdminPanel() {
-  const { user } = useContext(AuthContext);
-  const [activeTab, setActiveTab] = useState("overview");
+  const { pathname } = useLocation();
+  const activeTab = resolveAdminTab(pathname);
 
-  if (user && user.role !== "ADMIN") return <Navigate to="/dashboard" replace />;
+  if (!activeTab) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (activeTab === "overview") {
+    return <AdminOverview />;
+  }
 
   const tabContent = {
-    overview: <OverviewTab onNavigate={setActiveTab} />,
     ideas: <IdeasTab />,
     users: <UsersTab />,
     plans: <PlansTab />,
@@ -686,45 +625,18 @@ export default function AdminPanel() {
   };
 
   return (
-    <DashboardLayout>
-      <PageHeader
-        title="Admin Panel"
-        subtitle="Manage platform users, ideas, and plans"
-        badge={<span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Admin</span>}
-      />
-
-      <div className="grid lg:grid-cols-[200px_1fr] gap-6">
-        <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-                activeTab === id
-                  ? "bg-amber-500/10 border border-amber-500/25 text-amber-300"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/40"
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${activeTab === id ? "text-amber-400" : ""}`} />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="glass rounded-2xl p-5 sm:p-7 min-w-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
-            >
-              {tabContent[activeTab]}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-    </DashboardLayout>
+    <div className="glass rounded-2xl p-5 sm:p-7 min-w-0">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.18 }}
+        >
+          {tabContent[activeTab]}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

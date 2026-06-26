@@ -15,6 +15,7 @@ import PlanDetails from "./pages/plans/PlanDetails";
 import Profile from "./pages/profile/profile";
 import Settings from "./pages/settings/Settings";
 import AdminPanel from "./pages/admin/AdminPanel";
+import AdminLayout from "./layouts/AdminLayout";
 import HowItWorksPage from "./pages/public/HowItWorksPage";
 import FeaturesPage from "./pages/public/FeaturesPage";
 import PricingPage from "./pages/public/PricingPage";
@@ -36,7 +37,7 @@ function LoadingScreen() {
   );
 }
 
-function PrivateRoute({ children }) {
+function EmployeeRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
   const location = useLocation();
   if (loading) return <LoadingScreen />;
@@ -44,13 +45,32 @@ function PrivateRoute({ children }) {
     const redirect = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?redirect=${redirect}`} replace />;
   }
+  if (user.role === "ADMIN") {
+    return <Navigate to="/admin" replace />;
+  }
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
+  if (loading) return <LoadingScreen />;
+  if (!user) {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+  }
+  if (user.role !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
   if (loading) return <LoadingScreen />;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) {
+    return <Navigate to={user.role === "ADMIN" ? "/admin" : "/dashboard"} replace />;
+  }
   return children;
 }
 
@@ -73,16 +93,24 @@ export default function App() {
         <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
         <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/recommendations" element={<PrivateRoute><Recommendations /></PrivateRoute>} />
-        <Route path="/plans" element={<PrivateRoute><Plans /></PrivateRoute>} />
-        <Route path="/favorites" element={<PrivateRoute><FavoritePlans /></PrivateRoute>} />
-        <Route path="/plans/:id" element={<PrivateRoute><PlanDetails /></PrivateRoute>} />
-        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-        <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-        <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
-        <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
-        <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
+        <Route path="/dashboard" element={<EmployeeRoute><Dashboard /></EmployeeRoute>} />
+        <Route path="/recommendations" element={<EmployeeRoute><Recommendations /></EmployeeRoute>} />
+        <Route path="/plans" element={<EmployeeRoute><Plans /></EmployeeRoute>} />
+        <Route path="/favorites" element={<EmployeeRoute><FavoritePlans /></EmployeeRoute>} />
+        <Route path="/plans/:id" element={<EmployeeRoute><PlanDetails /></EmployeeRoute>} />
+        <Route path="/profile" element={<EmployeeRoute><Profile /></EmployeeRoute>} />
+        <Route path="/settings" element={<EmployeeRoute><Settings /></EmployeeRoute>} />
+        <Route path="/checkout" element={<EmployeeRoute><Checkout /></EmployeeRoute>} />
+        <Route path="/billing" element={<EmployeeRoute><Billing /></EmployeeRoute>} />
+
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<AdminPanel />} />
+          <Route path="ideas" element={<AdminPanel />} />
+          <Route path="users" element={<AdminPanel />} />
+          <Route path="plans" element={<AdminPanel />} />
+          <Route path="payments" element={<AdminPanel />} />
+          <Route path="invoices" element={<AdminPanel />} />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
