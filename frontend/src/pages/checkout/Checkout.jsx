@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   ArrowLeft,
   Loader2,
-  Shield
+  Shield,
+  AlertTriangle
 } from "lucide-react";
 
 import { AuthContext } from "../../context/AuthContext";
@@ -19,9 +20,9 @@ import api from "../../api/axios";
 import { PLANS } from "../../constants/plans";
 
 const METHODS = [
-  { id: "card", label: "Card", icon: CreditCard, desc: "Visa, Mastercard" },
-  { id: "chapa", label: "Chapa", icon: Wallet, desc: "Cards & mobile money" },
-  { id: "telebirr", label: "Telebirr", icon: Smartphone, desc: "Ethio Telecom wallet" }
+  { id: "chapa", label: "Chapa", icon: Wallet, desc: "Cards, Telebirr, mobile money" },
+  { id: "card", label: "Card", icon: CreditCard, desc: "Visa, Mastercard via Chapa" },
+  { id: "telebirr", label: "Telebirr", icon: Smartphone, desc: "USSD prompt to your phone" }
 ];
 
 export default function Checkout() {
@@ -33,10 +34,17 @@ export default function Checkout() {
 
   const plan = PLANS[planId] || PLANS.founder;
   const [method, setMethod] = useState("chapa");
-  const [card, setCard] = useState({ cardName: "", cardNumber: "", expiry: "", cvv: "" });
+  const [telebirrPhone, setTelebirrPhone] = useState("");
+  const [awaitingTxRef, setAwaitingTxRef] = useState(null);
+  const pollRef = useRef(null);
 
   const sub = user?.subscription;
   const alreadyActive = sub?.plan === "founder" && sub?.status === "active";
+
+  const { data: paymentConfig } = useQuery({
+    queryKey: ["payment-config"],
+    queryFn: () => api.get("/payments/config").then((r) => r.data.data)
+  });
 
   const { data: billingData } = useQuery({
     queryKey: ["billing-details"],
@@ -46,6 +54,11 @@ export default function Checkout() {
 
   const billing = billingData?.billingDetails || {};
   const hasBillingDetails = Boolean(billing.fullName && billing.addressLine1);
+  const defaultPhone = billing.phone || "";
+
+  useEffect(() => {
+    if (defaultPhone && !telebirrPhone) setTelebirrPhone(defaultPhone);
+  }, [defaultPhone, telebirrPhone]);
 
   useEffect(() => {
     if (alreadyActive) {
@@ -53,18 +66,36 @@ export default function Checkout() {
     }
   }, [alreadyActive, navigate]);
 
+  useEffect(() => () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+  }, []);
+
+  const handlePaymentSuccess = async (subscription) => {
+    if (subscription) {
+      updateUser({ ...user, subscription });
+    } else {
+      await refreshProfile();
+    }
+    toast.success("Payment confirmed! Welcome to Founder.");
+    navigate("/billing?success=1");
+  };
+
   const verifyMutation = useMutation({
     mutationFn: (txRef) => api.get(`/payments/verify/${txRef}`),
     onSuccess: async (res) => {
-      if (res.data.subscription) {
-        updateUser({ ...user, subscription: res.data.subscription });
-      } else {
-        await refreshProfile();
+      if (res.data.status === "completed") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setAwaitingTxRef(null);
+        await handlePaymentSuccess(res.data.subscription);
+      } else if (res.data.status === "pending") {
+        // keep polling for telebirr
       }
-      toast.success("Payment confirmed! Welcome to Founder.");
-      navigate("/billing?success=1");
     },
-    onError: () => toast.error("Could not verify payment. Contact support if you were charged.")
+    onError: (err) => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      setAwaitingTxRef(null);
+      toast.error(err.response?.data?.message || "Payment verification failed");
+    }
   });
 
   useEffect(() => {
@@ -73,6 +104,14 @@ export default function Checkout() {
     }
   }, [txRefFromUrl]);
 
+  const startPolling = (txRef) => {
+    setAwaitingTxRef(txRef);
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => {
+      verifyMutation.mutate(txRef);
+    }, 4000);
+  };
+
   const payMutation = useMutation({
     mutationFn: (payload) => api.post("/payments/initiate", payload),
     onSuccess: (res) => {
@@ -80,11 +119,12 @@ export default function Checkout() {
         window.location.href = res.data.checkoutUrl;
         return;
       }
-      if (res.data.subscription) {
-        updateUser({ ...user, subscription: res.data.subscription });
+      if (res.data.awaitingConfirmation && res.data.txRef) {
+        toast.success(res.data.message || "Check your phone to approve the payment.");
+        startPolling(res.data.txRef);
+        return;
       }
-      toast.success(res.data.mock ? "Payment simulated successfully (demo mode)" : "Payment successful!");
-      navigate("/billing?success=1");
+      toast.error("Unexpected payment response");
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Payment failed");
@@ -93,18 +133,46 @@ export default function Checkout() {
 
   const handlePay = () => {
     const payload = { method, plan: planId };
-    if (method === "card") {
-      Object.assign(payload, card);
+    if (method === "telebirr") {
+      payload.phone = telebirrPhone.trim();
+      if (!payload.phone) {
+        toast.error("Enter your Telebirr phone number");
+        return;
+      }
     }
     payMutation.mutate(payload);
   };
 
-  if (txRefFromUrl && verifyMutation.isPending) {
+  const paymentsReady = paymentConfig?.configured;
+
+  if (txRefFromUrl && verifyMutation.isPending && !awaitingTxRef) {
     return (
       <div className="min-h-screen bg-[#080d1a] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-indigo-400 animate-spin mx-auto mb-4" />
-          <p className="text-white font-medium">Confirming your payment...</p>
+          <p className="text-white font-medium">Confirming your payment with Chapa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (awaitingTxRef) {
+    return (
+      <div className="min-h-screen bg-[#080d1a] flex items-center justify-center px-4">
+        <div className="max-w-md w-full glass rounded-2xl p-8 text-center">
+          <Loader2 className="w-10 h-10 text-indigo-400 animate-spin mx-auto mb-4" />
+          <h1 className="text-lg font-bold text-white mb-2">Waiting for Telebirr approval</h1>
+          <p className="text-sm text-slate-400 mb-4">
+            Approve the USSD prompt on your phone. This page will update automatically once Chapa confirms payment.
+          </p>
+          <p className="text-xs text-slate-600 font-mono mb-6">{awaitingTxRef}</p>
+          <button
+            type="button"
+            onClick={() => verifyMutation.mutate(awaitingTxRef)}
+            className="text-sm text-indigo-400 hover:text-indigo-300"
+          >
+            Check status now
+          </button>
         </div>
       </div>
     );
@@ -124,6 +192,15 @@ export default function Checkout() {
             Manage billing
           </Link>
         </div>
+
+        {paymentConfig && !paymentsReady && (
+          <div className="mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-200 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Payments are not configured on the server. Add <code className="text-red-100">CHAPA_SECRET_KEY</code> to your backend <code className="text-red-100">.env</code> file.
+            </span>
+          </div>
+        )}
 
         {!hasBillingDetails && (
           <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-sm text-amber-200">
@@ -192,7 +269,7 @@ export default function Checkout() {
             className="lg:col-span-3 glass rounded-2xl p-6"
           >
             <h2 className="text-lg font-bold text-white mb-1">Payment method</h2>
-            <p className="text-slate-400 text-sm mb-6">Choose how you would like to pay</p>
+            <p className="text-slate-400 text-sm mb-6">All payments are processed securely through Chapa</p>
 
             <div className="grid sm:grid-cols-3 gap-3 mb-6">
               {METHODS.map(({ id, label, icon: Icon, desc }) => (
@@ -213,66 +290,35 @@ export default function Checkout() {
               ))}
             </div>
 
-            {method === "card" && (
-              <div className="space-y-4 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5">Name on card</label>
-                  <input
-                    value={card.cardName}
-                    onChange={(e) => setCard({ ...card, cardName: e.target.value })}
-                    className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                    placeholder="Full name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5">Card number</label>
-                  <input
-                    value={card.cardNumber}
-                    onChange={(e) => setCard({ ...card, cardNumber: e.target.value })}
-                    className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                    placeholder="4242 4242 4242 4242"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-1.5">Expiry</label>
-                    <input
-                      value={card.expiry}
-                      onChange={(e) => setCard({ ...card, expiry: e.target.value })}
-                      className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                      placeholder="MM/YY"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-1.5">CVV</label>
-                    <input
-                      value={card.cvv}
-                      onChange={(e) => setCard({ ...card, cvv: e.target.value })}
-                      className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                      placeholder="123"
-                      type="password"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {method === "chapa" && (
+            {(method === "chapa" || method === "card") && (
               <p className="text-sm text-slate-400 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                You will be redirected to Chapa to complete payment securely with card or mobile money.
+                {method === "card"
+                  ? "You will be redirected to Chapa's secure checkout to pay with Visa or Mastercard."
+                  : "You will be redirected to Chapa to pay with card, Telebirr, or other supported methods."}
               </p>
             )}
 
             {method === "telebirr" && (
-              <p className="text-sm text-slate-400 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                Pay with your Telebirr wallet. A USSD prompt will be sent to your registered phone (demo mode simulates success).
-              </p>
+              <div className="space-y-4 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
+                <p className="text-sm text-slate-400">
+                  Enter your Telebirr phone number. Chapa will send a USSD prompt — approve it to complete payment.
+                </p>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1.5">Telebirr phone number</label>
+                  <input
+                    value={telebirrPhone}
+                    onChange={(e) => setTelebirrPhone(e.target.value)}
+                    className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+                    placeholder="0912345678"
+                  />
+                </div>
+              </div>
             )}
 
             <button
               type="button"
               onClick={handlePay}
-              disabled={payMutation.isPending}
+              disabled={payMutation.isPending || !paymentsReady}
               className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
             >
               {payMutation.isPending ? (
@@ -287,7 +333,7 @@ export default function Checkout() {
 
             <p className="flex items-center justify-center gap-1.5 text-xs text-slate-500 mt-4">
               <Shield className="w-3.5 h-3.5" />
-              Secure payment · Encrypted checkout
+              Secured by Chapa · ETB {plan.price?.toLocaleString?.() ?? "2,500"}
             </p>
           </motion.div>
         </div>

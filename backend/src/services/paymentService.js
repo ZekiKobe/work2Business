@@ -1,9 +1,9 @@
-const crypto = require("crypto");
 const Payment = require("../models/Payment");
 const Invoice = require("../models/Invoice");
 const { PLANS } = require("../constants/plans");
+const chapaService = require("./chapaService");
 
-const generateTxRef = () => `w2b_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+const generateTxRef = () => `w2b_${Date.now()}_${require("crypto").randomBytes(4).toString("hex")}`;
 
 const generateInvoiceNumber = async () => {
   const year = new Date().getFullYear();
@@ -14,8 +14,7 @@ const generateInvoiceNumber = async () => {
 
   let seq = 1;
   if (last?.invoiceNumber) {
-    const part = last.invoiceNumber.replace(prefix, "");
-    seq = parseInt(part, 10) + 1;
+    seq = parseInt(last.invoiceNumber.replace(prefix, ""), 10) + 1;
   }
 
   return `${prefix}${String(seq).padStart(5, "0")}`;
@@ -71,7 +70,11 @@ exports.activateFounderPlan = async (user, method) => {
   return user;
 };
 
-exports.initiatePayment = async (user, method) => {
+exports.initiatePayment = async (user, method, { phone } = {}) => {
+  if (!chapaService.isConfigured()) {
+    throw new Error("Payment provider is not configured. Contact support or configure CHAPA_SECRET_KEY.");
+  }
+
   const plan = PLANS.founder;
   const txRef = generateTxRef();
 
@@ -85,54 +88,64 @@ exports.initiatePayment = async (user, method) => {
     txRef
   });
 
-  const chapaKey = process.env.CHAPA_SECRET_KEY;
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  if (method === "telebirr") {
+    const telebirrPhone = phone || user.billingDetails?.phone;
+    const result = await chapaService.directChargeTelebirr(user, {
+      txRef,
+      amount: plan.price,
+      phone: telebirrPhone
+    });
 
-  if (method === "chapa" && chapaKey) {
-    try {
-      const res = await fetch("https://api.chapa.co/v1/transaction/initialize", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${chapaKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          amount: plan.price,
-          currency: "ETB",
-          email: user.email,
-          first_name: user.firstName,
-          last_name: user.lastName,
-          tx_ref: txRef,
-          callback_url: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/v1/payments/webhook/chapa`,
-          return_url: `${frontendUrl}/checkout?plan=founder&tx_ref=${txRef}`
-        })
-      });
+    payment.providerRef = result.reference;
+    await payment.save();
 
-      const data = await res.json();
-      if (data.status === "success" && data.data?.checkout_url) {
-        payment.providerRef = data.data.reference;
-        await payment.save();
-        return { payment, checkoutUrl: data.data.checkout_url, mock: false };
-      }
-    } catch (err) {
-      console.error("Chapa init error:", err.message);
-    }
+    return {
+      payment,
+      awaitingConfirmation: true,
+      message: result.message
+    };
   }
 
-  return { payment, checkoutUrl: null, mock: true, txRef };
+  // card and chapa use Chapa hosted checkout (cards + mobile money)
+  const result = await chapaService.initializeCheckout(user, {
+    txRef,
+    amount: plan.price,
+    title: "Work2Business Founder"
+  });
+
+  payment.providerRef = result.reference;
+  await payment.save();
+
+  return {
+    payment,
+    checkoutUrl: result.checkoutUrl
+  };
 };
 
-exports.completePayment = async (txRef, providerRef = null) => {
+exports.verifyAndCompletePayment = async (txRef) => {
   const payment = await Payment.findOne({ txRef });
   if (!payment) {
     throw new Error("Payment not found");
   }
+
   if (payment.status === "completed") {
-    return payment;
+    return { payment, alreadyCompleted: true };
+  }
+
+  const verified = await chapaService.verifyTransaction(txRef);
+
+  if (verified.failed) {
+    payment.status = "failed";
+    await payment.save();
+    return { payment, failed: true, message: "Payment was declined or cancelled" };
+  }
+
+  if (!verified.paid) {
+    return { payment, pending: true, message: "Payment not confirmed yet" };
   }
 
   payment.status = "completed";
-  if (providerRef) payment.providerRef = providerRef;
+  if (verified.reference) payment.providerRef = verified.reference;
   await payment.save();
 
   const User = require("../models/User");
@@ -142,7 +155,7 @@ exports.completePayment = async (txRef, providerRef = null) => {
     await createInvoiceForPayment(user, payment);
   }
 
-  return payment;
+  return { payment, completed: true };
 };
 
 exports.createInvoiceForPayment = createInvoiceForPayment;

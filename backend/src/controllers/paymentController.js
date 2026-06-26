@@ -3,6 +3,7 @@ const Payment = require("../models/Payment");
 const Invoice = require("../models/Invoice");
 const { PLANS, syncSubscriptionStatus, buildSubscriptionResponse } = require("../constants/plans");
 const paymentService = require("../services/paymentService");
+const chapaService = require("../services/chapaService");
 
 const BILLING_FIELDS = [
   "fullName", "company", "phone", "addressLine1", "addressLine2",
@@ -11,6 +12,18 @@ const BILLING_FIELDS = [
 
 exports.getPlans = async (req, res) => {
   res.json({ success: true, data: Object.values(PLANS) });
+};
+
+exports.getPaymentConfig = async (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      provider: "chapa",
+      configured: chapaService.isConfigured(),
+      methods: ["chapa", "card", "telebirr"],
+      currency: "ETB"
+    }
+  });
 };
 
 exports.getSubscription = async (req, res) => {
@@ -161,9 +174,16 @@ exports.reactivateSubscription = async (req, res) => {
 
 exports.initiatePayment = async (req, res) => {
   try {
-    const { method } = req.body;
+    const { method, phone } = req.body;
     if (!["card", "chapa", "telebirr"].includes(method)) {
       return res.status(400).json({ success: false, message: "Invalid payment method" });
+    }
+
+    if (!chapaService.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message: "Payments are not configured. Set CHAPA_SECRET_KEY on the server."
+      });
     }
 
     const user = await User.findById(req.user._id);
@@ -173,20 +193,19 @@ exports.initiatePayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "You already have an active Founder plan" });
     }
 
-    if (method === "card") {
-      const { cardNumber, expiry, cvv, cardName } = req.body;
-      if (!cardNumber || !expiry || !cvv || !cardName) {
-        return res.status(400).json({ success: false, message: "Complete all card fields" });
-      }
-      const digits = cardNumber.replace(/\s/g, "");
-      if (digits.length < 13) {
-        return res.status(400).json({ success: false, message: "Invalid card number" });
+    if (method === "telebirr") {
+      const telebirrPhone = phone || user.billingDetails?.phone;
+      if (!telebirrPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number is required for Telebirr. Add it in Billing or enter it below."
+        });
       }
     }
 
-    const result = await paymentService.initiatePayment(user, method);
+    const result = await paymentService.initiatePayment(user, method, { phone });
 
-    if (method === "chapa" && result.checkoutUrl) {
+    if (result.checkoutUrl) {
       return res.json({
         success: true,
         redirect: true,
@@ -195,16 +214,12 @@ exports.initiatePayment = async (req, res) => {
       });
     }
 
-    if (method === "telebirr" || method === "card" || result.mock) {
-      await paymentService.completePayment(result.payment.txRef);
-      const updated = await User.findById(user._id);
-      await syncSubscriptionStatus(updated);
+    if (result.awaitingConfirmation) {
       return res.json({
         success: true,
-        message: "Payment successful",
+        awaitingConfirmation: true,
         txRef: result.payment.txRef,
-        subscription: buildSubscriptionResponse(updated),
-        mock: result.mock
+        message: result.message || "Approve the payment on your phone to continue."
       });
     }
 
@@ -223,30 +238,66 @@ exports.verifyPayment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Payment not found" });
     }
 
-    if (payment.status === "pending") {
-      await paymentService.completePayment(txRef);
+    if (payment.status === "completed") {
+      const user = await User.findById(req.user._id);
+      await syncSubscriptionStatus(user);
+      return res.json({
+        success: true,
+        status: "completed",
+        subscription: buildSubscriptionResponse(user)
+      });
+    }
+
+    if (payment.status === "failed") {
+      return res.status(400).json({
+        success: false,
+        status: "failed",
+        message: "Payment failed or was cancelled"
+      });
+    }
+
+    const result = await paymentService.verifyAndCompletePayment(txRef);
+
+    if (result.pending) {
+      return res.json({
+        success: true,
+        status: "pending",
+        message: result.message || "Waiting for payment confirmation"
+      });
+    }
+
+    if (result.failed) {
+      return res.status(400).json({
+        success: false,
+        status: "failed",
+        message: result.message || "Payment failed"
+      });
     }
 
     const user = await User.findById(req.user._id);
     await syncSubscriptionStatus(user);
     res.json({
       success: true,
-      subscription: buildSubscriptionResponse(user),
-      status: "completed"
+      status: "completed",
+      subscription: buildSubscriptionResponse(user)
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Verification failed" });
+    console.error("Verify payment error:", error);
+    res.status(500).json({ success: false, message: error.message || "Verification failed" });
   }
 };
 
 exports.chapaWebhook = async (req, res) => {
   try {
     const txRef = req.body?.tx_ref;
-    if (txRef && req.body?.status === "success") {
-      await paymentService.completePayment(txRef, req.body.reference);
+    if (!txRef) {
+      return res.status(200).send("OK");
     }
+
+    await paymentService.verifyAndCompletePayment(txRef);
     res.status(200).send("OK");
-  } catch {
+  } catch (err) {
+    console.error("Chapa webhook error:", err.message);
     res.status(200).send("OK");
   }
 };

@@ -4,6 +4,7 @@ const paymentController = require("../controllers/paymentController");
 const { protect } = require("../middlewares/authMiddleware");
 
 router.get("/plans", paymentController.getPlans);
+router.get("/config", paymentController.getPaymentConfig);
 router.post("/webhook/chapa", paymentController.chapaWebhook);
 
 router.get("/subscription", protect, paymentController.getSubscription);

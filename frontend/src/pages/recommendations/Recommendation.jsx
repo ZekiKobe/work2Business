@@ -13,7 +13,7 @@ import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { SkeletonCard } from "../../components/common/Skeleton";
 import api from "../../api/axios";
-import { showUpgradeToast } from "../../utils/upgradeToast";
+import { showUpgradeToast } from "../../utils/upgradeToast.jsx";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
