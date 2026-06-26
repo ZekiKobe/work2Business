@@ -494,9 +494,11 @@ function PlansTab() {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-plans", search],
-    queryFn: () => api.get("/admin/plans", { params: { search, limit: 50 } }).then((r) => r.data.data)
+    queryFn: () => api.get("/admin/plans", { params: { search, limit: 50 } }).then((r) => r.data.data),
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000)
   });
 
   const plans = data || [];
@@ -531,6 +533,14 @@ function PlansTab() {
 
       {isLoading ? (
         <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 glass rounded-xl animate-pulse bg-slate-800/40" />)}</div>
+      ) : isError ? (
+        <div className="glass rounded-xl p-8 text-center">
+          <p className="text-sm text-slate-400 mb-1">Could not load plans.</p>
+          <p className="text-xs text-slate-600 mb-4">The API may be restarting — try again in a moment.</p>
+          <button type="button" onClick={() => refetch()} className="px-4 py-2 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
+            Retry
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           {plans.map((plan) => (

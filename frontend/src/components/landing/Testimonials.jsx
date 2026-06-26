@@ -1,5 +1,6 @@
+import { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
 
 const TESTIMONIALS = [
   {
@@ -58,15 +59,96 @@ const TESTIMONIALS = [
   }
 ];
 
-export default function Testimonials() {
+function TestimonialCard({ t }) {
   return (
-    <section id="testimonials" className="py-28">
+    <div className="glass rounded-2xl p-6 flex flex-col h-full min-h-[320px] hover:border-slate-700/80 transition-all duration-300">
+      <Quote className="w-6 h-6 text-indigo-500/40 mb-4 shrink-0" />
+      <div className="flex gap-1 mb-4">
+        {Array.from({ length: t.stars }).map((_, j) => (
+          <Star key={j} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+        ))}
+      </div>
+      <p className="text-slate-300 text-sm leading-relaxed flex-1 mb-5">"{t.quote}"</p>
+      <div className="mb-4 px-3 py-1.5 bg-emerald-500/8 border border-emerald-500/20 rounded-xl">
+        <p className="text-xs text-emerald-400 font-semibold">✓ {t.result}</p>
+      </div>
+      <div className="flex items-center gap-3 pt-4 border-t border-slate-800 mt-auto">
+        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
+          {t.avatar}
+        </div>
+        <div>
+          <p className="font-semibold text-white text-sm">{t.name}</p>
+          <p className="text-slate-500 text-[11px]">{t.role}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Testimonials() {
+  const trackRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+
+  const updateControls = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanPrev(el.scrollLeft > 8);
+    setCanNext(el.scrollLeft < maxScroll - 8);
+
+    const cards = el.querySelectorAll("[data-slide]");
+    if (!cards.length) return;
+    let closest = 0;
+    let minDist = Infinity;
+    cards.forEach((card, i) => {
+      const dist = Math.abs(card.offsetLeft - el.scrollLeft);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = i;
+      }
+    });
+    setActiveIndex(closest);
+  }, []);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    updateControls();
+    el.addEventListener("scroll", updateControls, { passive: true });
+    window.addEventListener("resize", updateControls);
+    return () => {
+      el.removeEventListener("scroll", updateControls);
+      window.removeEventListener("resize", updateControls);
+    };
+  }, [updateControls]);
+
+  const scrollToIndex = (index) => {
+    const el = trackRef.current;
+    const card = el?.querySelectorAll("[data-slide]")[index];
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    }
+  };
+
+  const scrollBy = (direction) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector("[data-slide]");
+    const gap = 20;
+    const step = (card?.offsetWidth || 360) + gap;
+    el.scrollBy({ left: direction * step, behavior: "smooth" });
+  };
+
+  return (
+    <section id="testimonials" className="py-28 overflow-hidden">
       <div className="max-w-7xl mx-auto px-5 lg:px-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="section-label mb-3">Real Stories</p>
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
@@ -77,45 +159,64 @@ export default function Testimonials() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {TESTIMONIALS.map((t, i) => (
-            <motion.div
-              key={t.name}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: (i % 3) * 0.1, duration: 0.5 }}
-              className="glass rounded-2xl p-6 flex flex-col hover:border-slate-700/80 transition-all duration-300"
+        <div className="relative">
+          {/* Fade edges */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-[#080d1a] to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-l from-[#080d1a] to-transparent z-10" />
+
+          {/* Slider track */}
+          <div
+            ref={trackRef}
+            className="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 -mx-1 px-1 scrollbar-none"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {TESTIMONIALS.map((t) => (
+              <div
+                key={t.name}
+                data-slide
+                className="snap-start shrink-0 w-[85vw] sm:w-[380px] lg:w-[calc(33.333%-14px)]"
+              >
+                <TestimonialCard t={t} />
+              </div>
+            ))}
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              type="button"
+              onClick={() => scrollBy(-1)}
+              disabled={!canPrev}
+              aria-label="Previous testimonial"
+              className="p-2.5 rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 hover:text-white hover:border-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
-              {/* Quote icon */}
-              <Quote className="w-6 h-6 text-indigo-500/40 mb-4" />
+              <ChevronLeft className="w-5 h-5" />
+            </button>
 
-              {/* Stars */}
-              <div className="flex gap-1 mb-4">
-                {Array.from({ length: t.stars }).map((_, j) => (
-                  <Star key={j} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
+            <div className="flex items-center gap-2">
+              {TESTIMONIALS.map((t, i) => (
+                <button
+                  key={t.name}
+                  type="button"
+                  onClick={() => scrollToIndex(i)}
+                  aria-label={`Go to testimonial ${i + 1}`}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    activeIndex === i ? "w-6 bg-indigo-500" : "w-2 bg-slate-700 hover:bg-slate-500"
+                  }`}
+                />
+              ))}
+            </div>
 
-              <p className="text-slate-300 text-sm leading-relaxed flex-1 mb-5">"{t.quote}"</p>
-
-              {/* Result badge */}
-              <div className="mb-4 px-3 py-1.5 bg-emerald-500/8 border border-emerald-500/20 rounded-xl">
-                <p className="text-xs text-emerald-400 font-semibold">✓ {t.result}</p>
-              </div>
-
-              {/* Author */}
-              <div className="flex items-center gap-3 pt-4 border-t border-slate-800">
-                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
-                  {t.avatar}
-                </div>
-                <div>
-                  <p className="font-semibold text-white text-sm">{t.name}</p>
-                  <p className="text-slate-500 text-[11px]">{t.role}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+            <button
+              type="button"
+              onClick={() => scrollBy(1)}
+              disabled={!canNext}
+              aria-label="Next testimonial"
+              className="p-2.5 rounded-xl border border-slate-700/80 bg-slate-900/60 text-slate-300 hover:text-white hover:border-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </section>

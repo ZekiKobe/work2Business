@@ -1,6 +1,27 @@
 import { Link } from "react-router-dom";
 import { Building2, Globe, Share2, ExternalLink } from "lucide-react";
 
+const PRODUCT_LINKS = [
+  { to: "/how-it-works", label: "How It Works" },
+  { to: "/features", label: "Features" },
+  { to: "/pricing", label: "Pricing" },
+  { to: "/register", label: "Get Started" },
+];
+
+const PLATFORM_LINKS = [
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/recommendations", label: "Recommendations" },
+  { to: "/plans", label: "Business Plans" },
+  { to: "/settings", label: "Profile Settings" },
+];
+
+const COMPANY_LINKS = [
+  { to: "/privacy", label: "Privacy Policy" },
+  { to: "/terms", label: "Terms of Service" },
+  { to: "/security", label: "Security" },
+  { to: "/contact", label: "Contact" },
+];
+
 export default function LandingFooter() {
   const year = new Date().getFullYear();
 
@@ -25,16 +46,11 @@ export default function LandingFooter() {
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Product</p>
             <ul className="space-y-2.5">
-              {[
-                { href: "#how-it-works", label: "How It Works" },
-                { href: "#features", label: "Features" },
-                { href: "#pricing", label: "Pricing" },
-                { href: "/register", label: "Get Started" },
-              ].map((link) => (
+              {PRODUCT_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-slate-500 hover:text-slate-200 text-sm transition-colors">
+                  <Link to={link.to} className="text-slate-500 hover:text-slate-200 text-sm transition-colors">
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -44,26 +60,25 @@ export default function LandingFooter() {
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Platform</p>
             <ul className="space-y-2.5">
-              {[
-                { label: "Dashboard" },
-                { label: "Recommendations" },
-                { label: "Business Plans" },
-                { label: "Profile Settings" },
-              ].map((item) => (
-                <li key={item.label}>
-                  <span className="text-slate-500 text-sm">{item.label}</span>
+              {PLATFORM_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link to={link.to} className="text-slate-500 hover:text-slate-200 text-sm transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Company */}
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Company</p>
             <ul className="space-y-2.5">
-              {["Privacy Policy", "Terms of Service", "Security", "Contact"].map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-slate-500 hover:text-slate-200 text-sm transition-colors">{item}</a>
+              {COMPANY_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link to={link.to} className="text-slate-500 hover:text-slate-200 text-sm transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -76,15 +91,15 @@ export default function LandingFooter() {
             &copy; {year} Work2Business Inc. All rights reserved.
           </p>
           <div className="flex gap-4">
-            {[
-              { icon: Globe, href: "#" },
-              { icon: Share2, href: "#" },
-              { icon: ExternalLink, href: "#" },
-            ].map(({ icon: Icon, href }, i) => (
-              <a key={i} href={href} className="p-2 text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
-                <Icon className="w-4 h-4" />
-              </a>
-            ))}
+            <Link to="/" title="Home" className="p-2 text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
+              <Globe className="w-4 h-4" />
+            </Link>
+            <Link to="/features" title="Features" className="p-2 text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
+              <Share2 className="w-4 h-4" />
+            </Link>
+            <Link to="/contact" title="Contact" className="p-2 text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
+              <ExternalLink className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </div>

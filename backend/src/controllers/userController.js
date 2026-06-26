@@ -200,7 +200,7 @@ const DEFAULT_MILESTONES = [
   { key: "generate_ai_plan", title: "Generate an AI business plan", description: "Create your first AI-powered business plan with GPT-4o.", order: 6 },
   { key: "generate_business_names", title: "Generate business names", description: "Use the AI name generator to get brand ideas for your chosen business.", order: 7 },
   { key: "review_plan", title: "Review your full plan", description: "Read through all 8 sections of your generated business plan.", order: 8 },
-  { key: "refine_plan", title: "Generate a second plan", description: "Iterate — create a second plan for a different idea or improved profile.", order: 9 },
+  { key: "refine_plan", title: "Generate a second plan", description: "Iterate -create a second plan for a different idea or improved profile.", order: 9 },
   { key: "ready_to_launch", title: "Declare launch readiness", description: "Mark yourself as ready to begin the real-world steps of launching.", order: 10 }
 ];
 

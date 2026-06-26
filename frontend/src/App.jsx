@@ -15,6 +15,14 @@ import PlanDetails from "./pages/plans/PlanDetails";
 import Profile from "./pages/profile/profile";
 import Settings from "./pages/settings/Settings";
 import AdminPanel from "./pages/admin/AdminPanel";
+import HowItWorksPage from "./pages/public/HowItWorksPage";
+import FeaturesPage from "./pages/public/FeaturesPage";
+import PricingPage from "./pages/public/PricingPage";
+import PrivacyPolicyPage from "./pages/public/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/public/TermsOfServicePage";
+import SecurityPage from "./pages/public/SecurityPage";
+import ContactPage from "./pages/public/ContactPage";
+import Checkout from "./pages/checkout/Checkout";
 
 function LoadingScreen() {
   return (
@@ -47,6 +55,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
 
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/security" element={<SecurityPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
@@ -59,6 +75,7 @@ export default function App() {
         <Route path="/plans/:id" element={<PrivateRoute><PlanDetails /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+        <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
         <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

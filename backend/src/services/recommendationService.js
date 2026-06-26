@@ -106,7 +106,7 @@ exports.generateMatchReasons = (user, idea, breakdown) => {
 
   if (breakdown.capital >= 20) reasons.push("Strong capital match");
   else if (breakdown.capital >= 10) reasons.push("Partial capital match");
-  else reasons.push("Capital shortfall — consider starting small");
+  else reasons.push("Capital shortfall -consider starting small");
 
   const userSkillsLower = (user.skills || []).map((s) => s.toLowerCase());
   const matched = (idea.requiredSkills || []).filter((s) =>

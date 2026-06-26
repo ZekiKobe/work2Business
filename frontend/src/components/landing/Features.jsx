@@ -10,7 +10,7 @@ const FEATURES = [
     bg: "bg-indigo-500/10 border-indigo-500/20",
     badge: "Core",
     title: "6-Factor Match Scoring",
-    desc: "Capital, skills, interests, hours, salary replacement potential, and risk level — scored per-dimension with full transparency."
+    desc: "Capital, skills, interests, hours, salary replacement potential, and risk level -scored per-dimension with full transparency."
   },
   {
     icon: Brain,
@@ -42,7 +42,7 @@ const FEATURES = [
     bg: "bg-cyan-500/10 border-cyan-500/20",
     badge: "New",
     title: "Business Comparison",
-    desc: "Select any two business ideas and see them side-by-side — capital, profit, risk, skill requirements, and match scores."
+    desc: "Select any two business ideas and see them side-by-side -capital, profit, risk, skill requirements, and match scores."
   },
   {
     icon: Milestone,
@@ -58,7 +58,7 @@ const FEATURES = [
     bg: "bg-pink-500/10 border-pink-500/20",
     badge: "New",
     title: "AI Business Name Generator",
-    desc: "Generate 5 creative, brandable business names for your chosen idea with one click — powered by GPT-4o."
+    desc: "Generate 5 creative, brandable business names for your chosen idea with one click -powered by GPT-4o."
   },
   {
     icon: BarChart3,
@@ -66,7 +66,7 @@ const FEATURES = [
     bg: "bg-emerald-500/10 border-emerald-500/20",
     badge: "Core",
     title: "Real-time Dashboard",
-    desc: "E2B readiness score, plan activity charts, capital readiness, and personalized action items — all live, never hardcoded."
+    desc: "E2B readiness score, plan activity charts, capital readiness, and personalized action items -all live, never hardcoded."
   },
   {
     icon: Shield,
@@ -100,7 +100,7 @@ export default function Features() {
             <span className="gradient-text">idea to launch</span>
           </h2>
           <p className="text-slate-400 text-base leading-relaxed">
-            Not just recommendations — a complete toolset designed around the real challenges of transitioning from employment to entrepreneurship.
+            Not just recommendations -a complete toolset designed around the real challenges of transitioning from employment to entrepreneurship.
           </p>
         </motion.div>
 

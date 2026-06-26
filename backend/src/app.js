@@ -36,6 +36,7 @@ app.use("/api/v1/business-plans", businessPlanRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/payments", require("./routes/paymentRoutes"));
 
 app.use(errorHandler);
 

@@ -107,6 +107,22 @@ const userSchema = new mongoose.Schema(
       emailOnPlan: { type: Boolean, default: true },
       emailOnMilestone: { type: Boolean, default: true },
       weeklyDigest: { type: Boolean, default: false }
+    },
+
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["starter", "founder"],
+        default: "starter"
+      },
+      status: {
+        type: String,
+        enum: ["active", "pending", "expired"],
+        default: "active"
+      },
+      expiresAt: { type: Date },
+      paymentMethod: { type: String },
+      lastPaymentAt: { type: Date }
     }
   },
   {

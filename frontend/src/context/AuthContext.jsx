@@ -19,7 +19,7 @@ export default function AuthProvider({ children }) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       }
     } catch {
-      // Token expired or invalid — clear session
+      // Token expired or invalid -clear session
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       setUser(null);

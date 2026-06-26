@@ -453,7 +453,7 @@ function CompareDrawer({ ideaA, ideaB, onClose }) {
           <div className="mt-5 pt-5 border-t border-slate-800/40 grid grid-cols-2 gap-4">
             {[a, b].map((idea) => (
               <div key={idea._id || idea.id}>
-                <p className="text-xs font-bold text-slate-400 mb-2">{idea.name} — Skills</p>
+                <p className="text-xs font-bold text-slate-400 mb-2">{idea.name} -Skills</p>
                 <div className="flex flex-wrap gap-1">
                   {(idea.requiredSkills || []).map(s => (
                     <span key={s} className="text-[10px] px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full">{s}</span>

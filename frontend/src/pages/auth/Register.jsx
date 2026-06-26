@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ import FinancialStep from "../../components/auth/FinancialStep";
 import SkillsStep from "../../components/auth/SkillsStep";
 import InterestsStep from "../../components/auth/InterestsStep";
 import ReviewStep from "../../components/auth/ReviewStep";
+import { PLANS } from "../../constants/plans";
 
 const STEPS = [
   { id: 1, label: "Personal" },
@@ -41,6 +42,9 @@ const INITIAL_DATA = {
 export default function Register() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedPlan = searchParams.get("plan") === "founder" ? "founder" : "starter";
+  const planInfo = PLANS[selectedPlan];
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(INITIAL_DATA);
 
@@ -49,7 +53,11 @@ export default function Register() {
     onSuccess: (res) => {
       login(res.data);
       toast.success("Welcome to Work2Business! Let's build your future.");
-      navigate("/dashboard");
+      if (selectedPlan === "founder") {
+        navigate("/checkout?plan=founder");
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Registration failed. Please try again.");
@@ -94,6 +102,7 @@ export default function Register() {
   const submit = () => {
     mutate({
       ...formData,
+      selectedPlan,
       monthlySalary: Number(formData.monthlySalary) || 0,
       availableCapital: Number(formData.availableCapital) || 0,
       availableHoursPerWeek: Number(formData.availableHoursPerWeek) || 0
@@ -175,6 +184,14 @@ export default function Register() {
           {/* Header */}
           <div className="mb-6">
             <p className="section-label mb-1">Step {step} of {STEPS.length}</p>
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                {planInfo.name} plan · {planInfo.priceLabel}{planInfo.period ? ` ${planInfo.period}` : ""}
+              </span>
+              <Link to="/pricing" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                Change plan
+              </Link>
+            </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">
               {step === 1 && "Create your account"}
               {step === 2 && "Your employment background"}

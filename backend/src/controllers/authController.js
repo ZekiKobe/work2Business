@@ -4,6 +4,23 @@ const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 const { sendPasswordResetEmail } = require("../services/emailService");
 
+const formatUser = (user) => ({
+  _id: user._id,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  email: user.email,
+  profession: user.profession,
+  employer: user.employer,
+  monthlySalary: user.monthlySalary,
+  availableCapital: user.availableCapital,
+  availableHoursPerWeek: user.availableHoursPerWeek,
+  skills: user.skills,
+  interests: user.interests,
+  role: user.role,
+  profileCompleteness: user.profileCompleteness,
+  subscription: user.subscription || { plan: "starter", status: "active" }
+});
+
 exports.register = async (req, res) => {
   try {
     const existingUser = await User.findOne({ email: req.body.email });
@@ -15,11 +32,17 @@ exports.register = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(req.body.password, 12);
+    const { password, selectedPlan, ...profile } = req.body;
+    const plan = selectedPlan === "founder" ? "founder" : "starter";
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const newUser = new User({
-      ...req.body,
-      password: hashedPassword
+      ...profile,
+      password: hashedPassword,
+      subscription: {
+        plan,
+        status: plan === "founder" ? "pending" : "active"
+      }
     });
 
     await newUser.save();
@@ -30,21 +53,7 @@ exports.register = async (req, res) => {
       success: true,
       message: "Account created successfully",
       token,
-      user: {
-        _id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-        profession: newUser.profession,
-        employer: newUser.employer,
-        monthlySalary: newUser.monthlySalary,
-        availableCapital: newUser.availableCapital,
-        availableHoursPerWeek: newUser.availableHoursPerWeek,
-        skills: newUser.skills,
-        interests: newUser.interests,
-        role: newUser.role,
-        profileCompleteness: newUser.profileCompleteness
-      }
+      user: formatUser(newUser)
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -97,21 +106,7 @@ exports.login = async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        profession: user.profession,
-        employer: user.employer,
-        monthlySalary: user.monthlySalary,
-        availableCapital: user.availableCapital,
-        availableHoursPerWeek: user.availableHoursPerWeek,
-        skills: user.skills,
-        interests: user.interests,
-        role: user.role,
-        profileCompleteness: user.profileCompleteness
-      }
+      user: formatUser(user)
     });
   } catch (error) {
     console.error("Login error:", error);

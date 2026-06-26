@@ -219,35 +219,49 @@ exports.getPlans = async (req, res) => {
     if (active === "true") filter.isActive = true;
     if (active === "false") filter.isActive = false;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    if (search?.trim()) {
+      const q = search.trim();
+      const [matchingUsers, matchingIdeas] = await Promise.all([
+        User.find({
+          $or: [
+            { email: { $regex: q, $options: "i" } },
+            { firstName: { $regex: q, $options: "i" } },
+            { lastName: { $regex: q, $options: "i" } }
+          ]
+        }).select("_id"),
+        BusinessIdea.find({ name: { $regex: q, $options: "i" } }).select("_id")
+      ]);
 
-    let plans = await BusinessPlan.find(filter)
-      .populate("businessIdea")
-      .populate("user", "firstName lastName email role")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit));
-
-    if (search) {
-      const q = search.toLowerCase();
-      plans = plans.filter(
-        (p) =>
-          p.title?.toLowerCase().includes(q) ||
-          p.businessIdea?.name?.toLowerCase().includes(q) ||
-          p.user?.email?.toLowerCase().includes(q)
-      );
+      filter.$or = [
+        { title: { $regex: q, $options: "i" } },
+        { user: { $in: matchingUsers.map((u) => u._id) } },
+        { businessIdea: { $in: matchingIdeas.map((i) => i._id) } }
+      ];
     }
 
-    const total = await BusinessPlan.countDocuments(filter);
+    const skip = (Number(page) - 1) * Number(limit);
+    const numericLimit = Number(limit);
+
+    const [plans, total] = await Promise.all([
+      BusinessPlan.find(filter)
+        .select("_id title source isActive createdAt user businessIdea")
+        .populate("businessIdea", "name")
+        .populate("user", "firstName lastName email role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(numericLimit)
+        .lean(),
+      BusinessPlan.countDocuments(filter)
+    ]);
 
     res.status(200).json({
       success: true,
       data: plans,
       pagination: {
         page: Number(page),
-        limit: Number(limit),
+        limit: numericLimit,
         total,
-        pages: Math.ceil(total / Number(limit))
+        pages: Math.ceil(total / numericLimit)
       }
     });
   } catch (error) {

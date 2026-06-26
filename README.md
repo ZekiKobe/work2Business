@@ -1,6 +1,6 @@
 # Work2Business
 
-**Turn your employment experience into a profitable business — powered by AI.**
+**Turn your employment experience into a profitable business -powered by AI.**
 
 Work2Business is a full-stack web platform that helps employees discover the right business to start, generates personalized AI-powered business plans, and tracks their journey from employment to entrepreneurship.
 
@@ -8,31 +8,31 @@ Work2Business is a full-stack web platform that helps employees discover the rig
 
 ## What It Does
 
-A professional fills out a 6-step onboarding profile covering their skills, available capital, current salary, weekly hours, and business interests. The platform's 6-factor scoring engine matches them against 15+ curated business ideas and ranks each one by how well it fits their exact situation. From any match, they can generate a complete GPT-4o business plan in under 30 seconds — covering everything from executive summary to 90-day launch roadmap.
+A professional fills out a 6-step onboarding profile covering their skills, available capital, current salary, weekly hours, and business interests. The platform's 6-factor scoring engine matches them against 15+ curated business ideas and ranks each one by how well it fits their exact situation. From any match, they can generate a complete GPT-4o business plan in under 30 seconds -covering everything from executive summary to 90-day launch roadmap.
 
 ---
 
 ## Features
 
 ### Core Platform
-- **6-Step Onboarding** — Personal info, employment background, financial capacity, skills, interests, and review
-- **6-Factor Match Scoring** — Capital coverage, skill overlap, interest alignment, hours availability, salary replacement potential, and risk level
-- **AI Business Plan Generation** — GPT-4o writes an 8-section personalized plan; rule-based fallback if AI is unavailable
-- **Real-time Dashboard** — E2B readiness score, capital readiness, plan activity charts (Recharts), and action items
+- **6-Step Onboarding** -Personal info, employment background, financial capacity, skills, interests, and review
+- **6-Factor Match Scoring** -Capital coverage, skill overlap, interest alignment, hours availability, salary replacement potential, and risk level
+- **AI Business Plan Generation** -GPT-4o writes an 8-section personalized plan; rule-based fallback if AI is unavailable
+- **Real-time Dashboard** -E2B readiness score, capital readiness, plan activity charts (Recharts), and action items
 
 ### New Advanced Features
-- **Favorites / Bookmarks** — Save any business idea with one click; filter recommendations to favorites only
-- **Skill Gap Analysis** — Per-idea breakdown of which required skills you already have vs. need to develop, with curated learning resource links
-- **Business Idea Comparison** — Select any two ideas to view a side-by-side comparison table (capital, profit, risk, hours, skills, match score)
-- **Launch Milestone Tracker** — 10-step personalized launch checklist on the dashboard, persisted per user with optimistic UI
-- **AI Business Name Generator** — GPT-4o generates 5 brandable business name ideas for any chosen idea; click to copy
+- **Favorites / Bookmarks** -Save any business idea with one click; filter recommendations to favorites only
+- **Skill Gap Analysis** -Per-idea breakdown of which required skills you already have vs. need to develop, with curated learning resource links
+- **Business Idea Comparison** -Select any two ideas to view a side-by-side comparison table (capital, profit, risk, hours, skills, match score)
+- **Launch Milestone Tracker** -10-step personalized launch checklist on the dashboard, persisted per user with optimistic UI
+- **AI Business Name Generator** -GPT-4o generates 5 brandable business name ideas for any chosen idea; click to copy
 
 ### Admin Panel (ADMIN role)
-- **Platform overview** — Users, ideas, plans, and activity stats
-- **Business idea management** — Create, edit, delete, activate/deactivate ideas
-- **User management** — Change roles, deactivate/reactivate, permanent delete with confirmation
-- **Plan management** — View all plans, hide/restore from users, permanent delete with confirmation
-- **Admin seed** — `npm run seed:admin` creates default admin account (configure via `ADMIN_EMAIL` / `ADMIN_PASSWORD`)
+- **Platform overview** -Users, ideas, plans, and activity stats
+- **Business idea management** -Create, edit, delete, activate/deactivate ideas
+- **User management** -Change roles, deactivate/reactivate, permanent delete with confirmation
+- **Plan management** -View all plans, hide/restore from users, permanent delete with confirmation
+- **Admin seed** -`npm run seed:admin` creates default admin account (configure via `ADMIN_EMAIL` / `ADMIN_PASSWORD`)
 
 ### Auth & Security
 - JWT-based authentication with token persistence
@@ -125,7 +125,7 @@ work2business/
 
 ## API Reference
 
-### Auth — `/api/v1/auth`
+### Auth -`/api/v1/auth`
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/register` | Create account (rate limited, validated) |
@@ -133,7 +133,7 @@ work2business/
 | POST | `/forgot-password` | Send password reset email |
 | POST | `/reset-password` | Reset password with token |
 
-### User — `/api/v1/user`
+### User -`/api/v1/user`
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/profile` | Get full user profile |
@@ -142,7 +142,7 @@ work2business/
 | GET | `/milestones` | Get launch milestone checklist |
 | PATCH | `/milestones/:key/toggle` | Check/uncheck a milestone |
 
-### Business Ideas — `/api/v1/business-ideas`
+### Business Ideas -`/api/v1/business-ideas`
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/` | List all active business ideas |
@@ -151,25 +151,25 @@ work2business/
 | GET | `/:id/skill-gap` | Skill gap analysis for an idea |
 | POST | `/compare` | Compare two ideas side-by-side |
 
-### Recommendations — `/api/v1/recommendations`
+### Recommendations -`/api/v1/recommendations`
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/` | Get scored + ranked recommendations for current user |
 
-### Business Plans — `/api/v1/business-plans`
+### Business Plans -`/api/v1/business-plans`
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/` | List user's business plans |
 | GET | `/:id` | Get single plan (ownership checked) |
 | DELETE | `/:id` | Delete a plan (ownership checked) |
 
-### AI — `/api/v1/ai`
+### AI -`/api/v1/ai`
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/business-plan` | Generate AI business plan for an idea |
 | POST | `/business-names` | Generate 5 AI business name ideas |
 
-### Admin — `/api/v1/admin` (ADMIN role required)
+### Admin -`/api/v1/admin` (ADMIN role required)
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/stats` | Platform overview stats |
@@ -221,7 +221,7 @@ PORT=5000
 MONGO_URI=mongodb://localhost:27017/work2business
 JWT_SECRET=your_jwt_secret_here
 JWT_EXPIRES_IN=7d
-OPENAI_API_KEY=sk-...         # Optional — fallback works without it
+OPENAI_API_KEY=sk-...         # Optional -fallback works without it
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your@email.com
@@ -252,11 +252,11 @@ This inserts 15 business ideas across Technology, Education, Finance, Healthcare
 ### 4. Start the servers
 
 ```bash
-# Terminal 1 — Backend
+# Terminal 1 -Backend
 cd backend
 npm run dev
 
-# Terminal 2 — Frontend
+# Terminal 2 -Frontend
 cd frontend
 npm run dev
 ```
@@ -273,9 +273,9 @@ Backend API: [http://localhost:5000](http://localhost:5000)
 - Employment (profession, employer, monthly salary)
 - Financial (available capital, hours per week)
 - Skills and interests arrays
-- `favoriteIdeas` — array of bookmarked BusinessIdea refs
-- `milestones` — embedded 10-step launch checklist
-- `profileCompleteness` — virtual computed 0–100 score
+- `favoriteIdeas` -array of bookmarked BusinessIdea refs
+- `milestones` -embedded 10-step launch checklist
+- `profileCompleteness` -virtual computed 0–100 score
 - Password reset token fields
 
 ### BusinessIdea

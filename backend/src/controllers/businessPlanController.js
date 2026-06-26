@@ -20,7 +20,7 @@ exports.createBusinessPlan = async (req, res) => {
     const plan = await BusinessPlan.create({
       user: req.user._id,
       businessIdea: idea._id,
-      title: `${idea.name} — Business Plan`,
+      title: `${idea.name} -Business Plan`,
       source: "MANUAL",
       ...planData
     });

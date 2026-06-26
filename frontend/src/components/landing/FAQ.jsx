@@ -5,23 +5,23 @@ import { ChevronDown } from "lucide-react";
 const FAQS = [
   {
     q: "Do I need startup experience to use Work2Business?",
-    a: "Not at all. That's the whole point. Work2Business is specifically designed for employees who have never started a business before. It turns your existing professional experience, skills, and capital into a concrete business plan — no entrepreneur background required."
+    a: "Not at all. That's the whole point. Work2Business is specifically designed for employees who have never started a business before. It turns your existing professional experience, skills, and capital into a concrete business plan -no entrepreneur background required."
   },
   {
     q: "How accurate is the business matching?",
-    a: "We score every idea across 6 dimensions tailored to your exact profile: capital coverage, skill overlap, interest alignment, weekly hours available, salary replacement potential, and risk tolerance. The result is a 0–100 match score with a transparent breakdown — you can see exactly why each score is what it is."
+    a: "We score every idea across 6 dimensions tailored to your exact profile: capital coverage, skill overlap, interest alignment, weekly hours available, salary replacement potential, and risk tolerance. The result is a 0–100 match score with a transparent breakdown -you can see exactly why each score is what it is."
   },
   {
     q: "What does the AI business plan actually include?",
-    a: "8 sections: Executive Summary, Market Analysis, Business Model, Financial Plan (with startup costs, monthly expenses, and revenue projections), Marketing Strategy, 90-day Operational Roadmap, Risk Analysis, and Key Milestones. It's generated using GPT-4o with your specific profile data injected — not a template."
+    a: "8 sections: Executive Summary, Market Analysis, Business Model, Financial Plan (with startup costs, monthly expenses, and revenue projections), Marketing Strategy, 90-day Operational Roadmap, Risk Analysis, and Key Milestones. It's generated using GPT-4o with your specific profile data injected -not a template."
   },
   {
     q: "What are the new features like Skill Gap Analysis and Business Comparison?",
-    a: "Skill Gap Analysis shows you — for any business idea — exactly which required skills you already have and which ones you need to develop, with learning resource suggestions. Business Comparison lets you pick two ideas and view every metric side-by-side to make a confident decision."
+    a: "Skill Gap Analysis shows you -for any business idea -exactly which required skills you already have and which ones you need to develop, with learning resource suggestions. Business Comparison lets you pick two ideas and view every metric side-by-side to make a confident decision."
   },
   {
     q: "What if the AI fails to generate a plan?",
-    a: "We have a rule-based fallback engine that generates a complete plan instantly — covering executive summary, financial projections, marketing strategy, and operational plan. You'll be notified if AI was used or if the fallback was triggered. You're never left with nothing."
+    a: "We have a rule-based fallback engine that generates a complete plan instantly -covering executive summary, financial projections, marketing strategy, and operational plan. You'll be notified if AI was used or if the fallback was triggered. You're never left with nothing."
   },
   {
     q: "Is my financial information private?",
@@ -29,7 +29,7 @@ const FAQS = [
   },
   {
     q: "Can I save ideas I like and come back later?",
-    a: "Yes — use the Favorites/Bookmarks feature to save any business idea with one click. Your saved ideas appear in a dedicated filter on the Recommendations page so you can revisit them anytime."
+    a: "Yes -use the Favorites/Bookmarks feature to save any business idea with one click. Your saved ideas appear in a dedicated filter on the Recommendations page so you can revisit them anytime."
   }
 ];
 

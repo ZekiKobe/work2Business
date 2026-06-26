@@ -271,7 +271,7 @@ function DangerTab() {
           <div>
             <p className="font-semibold text-white text-sm">Deactivate Account</p>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Your account will be deactivated and you will be logged out. Your data is preserved — contact support to reactivate.
+              Your account will be deactivated and you will be logged out. Your data is preserved -contact support to reactivate.
             </p>
           </div>
         </div>

@@ -8,7 +8,7 @@ const STEPS = [
     color: "from-blue-600 to-indigo-600",
     glow: "rgba(99,102,241,0.2)",
     title: "Build Your Profile",
-    desc: "Complete a 6-step onboarding — your profession, current employer, monthly salary, available capital, skills, and business interests. Takes 3 minutes.",
+    desc: "Complete a 6-step onboarding -your profession, current employer, monthly salary, available capital, skills, and business interests. Takes 3 minutes.",
     detail: ["No resume upload needed", "Skills from a curated list of 45+", "Capital & time availability tracked"]
   },
   {
@@ -17,7 +17,7 @@ const STEPS = [
     color: "from-purple-600 to-violet-600",
     glow: "rgba(139,92,246,0.2)",
     title: "Get AI-Matched",
-    desc: "Our 6-factor scoring engine ranks every business idea against your exact profile — not generic suggestions.",
+    desc: "Our 6-factor scoring engine ranks every business idea against your exact profile -not generic suggestions.",
     detail: ["Capital match scoring", "Skill overlap analysis", "Interest & hours alignment"]
   },
   {
@@ -26,7 +26,7 @@ const STEPS = [
     color: "from-amber-500 to-orange-500",
     glow: "rgba(245,158,11,0.2)",
     title: "Generate Your Plan",
-    desc: "One click. GPT-4o writes a complete, personalized business plan — executive summary, financials, marketing strategy, and a 90-day launch roadmap.",
+    desc: "One click. GPT-4o writes a complete, personalized business plan -executive summary, financials, marketing strategy, and a 90-day launch roadmap.",
     detail: ["8-section business plan", "Financial projections", "90-day milestone roadmap"]
   },
   {
@@ -57,11 +57,11 @@ export default function HowItWorks() {
             <span className="gradient-text">entrepreneur in 4 steps</span>
           </h2>
           <p className="text-slate-400 text-base max-w-xl mx-auto leading-relaxed">
-            A clear, guided path — no guesswork, no generic advice. Everything personalized to your situation.
+            A clear, guided path -no guesswork, no generic advice. Everything personalized to your situation.
           </p>
         </motion.div>
 
-        {/* Steps — alternating layout */}
+        {/* Steps -alternating layout */}
         <div className="space-y-8 lg:space-y-0 relative">
           {/* Connector line (desktop) */}
           <div className="hidden lg:block absolute left-1/2 top-20 bottom-20 w-px bg-gradient-to-b from-indigo-500/30 via-purple-500/20 to-emerald-500/20 -translate-x-1/2" />

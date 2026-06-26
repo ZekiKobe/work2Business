@@ -54,7 +54,7 @@ export default function Hero() {
           </motion.h1>
 
           <motion.p variants={item} className="text-lg text-slate-400 leading-relaxed mb-8 max-w-lg">
-            Work2Business analyzes your skills, capital, and experience to match you with the right business — then builds a complete, personalized launch plan in seconds.
+            Work2Business analyzes your skills, capital, and experience to match you with the right business -then builds a complete, personalized launch plan in seconds.
           </motion.p>
 
           <motion.ul variants={item} className="space-y-2.5 mb-10">
@@ -71,7 +71,7 @@ export default function Hero() {
               to="/register"
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl transition-all duration-200 active:scale-[0.97] shadow-[0_0_30px_rgba(99,102,241,0.4)]"
             >
-              Start for free — 3 minutes <ArrowRight className="w-4 h-4" />
+              Start for free -3 minutes <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               to="/login"

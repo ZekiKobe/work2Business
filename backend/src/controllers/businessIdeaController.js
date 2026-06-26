@@ -84,7 +84,7 @@ exports.deleteIdea = async (req, res) => {
     }
 };
 
-// Toggle favorite — POST /business-ideas/:id/favorite
+// Toggle favorite -POST /business-ideas/:id/favorite
 exports.toggleFavorite = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -98,6 +98,15 @@ exports.toggleFavorite = async (req, res) => {
         const index = user.favoriteIdeas.indexOf(ideaId);
         let isFavorited;
         if (index === -1) {
+            const { getPlanLimits } = require("../constants/plans");
+            const limits = getPlanLimits(user.subscription);
+            if (limits.bookmarkLimit && user.favoriteIdeas.length >= limits.bookmarkLimit) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Starter plan allows 3 bookmarks. Upgrade to Founder for unlimited bookmarks.",
+                    upgradeRequired: true
+                });
+            }
             user.favoriteIdeas.push(ideaId);
             isFavorited = true;
         } else {
@@ -122,7 +131,7 @@ exports.toggleFavorite = async (req, res) => {
     }
 };
 
-// Get user's favorite ideas — GET /business-ideas/favorites
+// Get user's favorite ideas -GET /business-ideas/favorites
 exports.getFavorites = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).populate("favoriteIdeas");
@@ -132,7 +141,7 @@ exports.getFavorites = async (req, res) => {
     }
 };
 
-// Skill gap analysis — GET /business-ideas/:id/skill-gap
+// Skill gap analysis -GET /business-ideas/:id/skill-gap
 exports.getSkillGap = async (req, res) => {
     try {
         const idea = await BusinessIdea.findById(req.params.id);
@@ -193,7 +202,7 @@ exports.getSkillGap = async (req, res) => {
     }
 };
 
-// Update idea (admin) — PUT /business-ideas/:id
+// Update idea (admin) -PUT /business-ideas/:id
 exports.updateIdea = async (req, res) => {
     try {
         const idea = await BusinessIdea.findByIdAndUpdate(
@@ -208,7 +217,7 @@ exports.updateIdea = async (req, res) => {
     }
 };
 
-// Compare two ideas — POST /business-ideas/compare
+// Compare two ideas -POST /business-ideas/compare
 exports.compareIdeas = async (req, res) => {
     try {
         const { ideaIdA, ideaIdB } = req.body;

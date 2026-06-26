@@ -107,4 +107,13 @@
     border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 font-medium text-sm rounded-xl
     transition-all duration-200 active:scale-[0.98];
   }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

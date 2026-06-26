@@ -5,6 +5,7 @@ const { generateAIPlan, generateBusinessNames } = require("../services/aiService
 const { generateBusinessPlan } = require("../services/businessPlanService");
 const { createNotification } = require("./notificationController");
 const { sendPlanGeneratedEmail } = require("../services/emailService");
+const { getPlanLimits } = require("../constants/plans");
 
 exports.generatePlan = async (req, res) => {
   try {
@@ -19,6 +20,17 @@ exports.generatePlan = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
+    const limits = getPlanLimits(user.subscription);
+    if (limits.aiPlanLimit) {
+      const planCount = await BusinessPlan.countDocuments({ user: req.user._id });
+      if (planCount >= limits.aiPlanLimit) {
+        return res.status(403).json({
+          success: false,
+          message: "Starter plan includes 1 AI business plan. Upgrade to Founder for unlimited plans.",
+          upgradeRequired: true
+        });
+      }
+    }
 
     let planData;
     let source = "AI";
@@ -34,7 +46,7 @@ exports.generatePlan = async (req, res) => {
     const savedPlan = await BusinessPlan.create({
       user: req.user._id,
       businessIdea: idea._id,
-      title: planData.title || `${idea.name} — Business Plan`,
+      title: planData.title || `${idea.name} -Business Plan`,
       source,
       executiveSummary: planData.executiveSummary,
       marketAnalysis: planData.marketAnalysis,

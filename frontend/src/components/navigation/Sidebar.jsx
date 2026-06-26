@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Lightbulb,
@@ -28,11 +29,17 @@ const MENU = [
 export default function Sidebar({ isOpen = false, onClose }) {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const completeness = user?.profileCompleteness ?? 0;
 
   const handleNavClick = () => {
     if (window.innerWidth < 1024) onClose?.();
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -151,7 +158,8 @@ export default function Sidebar({ isOpen = false, onClose }) {
       {/* Footer */}
       <div className="p-3 border-t border-slate-800/60 space-y-1">
         <button
-          onClick={() => { logout(); navigate("/login"); }}
+          type="button"
+          onClick={() => setShowLogoutConfirm(true)}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-200"
         >
           <LogOut className="w-4 h-4 shrink-0" />
@@ -159,6 +167,56 @@ export default function Sidebar({ isOpen = false, onClose }) {
         </button>
         <p className="text-center text-[10px] text-slate-700 pt-1">&copy; {new Date().getFullYear()} Work2Business</p>
       </div>
+
+      {createPortal(
+        <AnimatePresence>
+          {showLogoutConfirm && (
+            <div
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+              onClick={() => setShowLogoutConfirm(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.15 }}
+                className="bg-[#0d1425] border border-slate-700/80 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-red-500/10 rounded-lg">
+                    <LogOut className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-sm">Sign out?</p>
+                    <p className="text-xs text-slate-500 mt-0.5">You will need to sign in again to continue.</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-400 mb-5">
+                  Are you sure you want to sign out of your Work2Business account?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-500 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </aside>
   );
 }

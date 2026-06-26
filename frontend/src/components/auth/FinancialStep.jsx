@@ -56,7 +56,7 @@ export default function FinancialStep({ formData, setFormData }) {
 
       <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
         <p className="text-xs text-emerald-300 leading-relaxed">
-          <span className="font-semibold">Your data is private.</span> Financial information is used only to personalize business recommendations — never shared or sold.
+          <span className="font-semibold">Your data is private.</span> Financial information is used only to personalize business recommendations -never shared or sold.
         </p>
       </div>
     </div>

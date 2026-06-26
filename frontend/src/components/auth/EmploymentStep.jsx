@@ -30,7 +30,7 @@ export default function EmploymentStep({ formData, setFormData }) {
             className="input-base pl-10"
           />
         </div>
-        <p className="text-xs text-slate-500 mt-1.5">Optional — helps with context for your business plan</p>
+        <p className="text-xs text-slate-500 mt-1.5">Optional -helps with context for your business plan</p>
       </div>
 
       <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">

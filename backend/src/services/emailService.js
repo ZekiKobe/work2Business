@@ -61,7 +61,7 @@ exports.sendPasswordResetEmail = async (email, resetToken) => {
   const transporter = createTransporter();
 
   if (!transporter) {
-    // Dev mode — log to console
+    // Dev mode -log to console
     console.log("\n========== PASSWORD RESET EMAIL ==========");
     console.log(`To: ${email}`);
     console.log(`Reset URL: ${resetUrl}`);
