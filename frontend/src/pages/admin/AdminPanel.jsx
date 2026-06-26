@@ -13,6 +13,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -129,7 +130,7 @@ function IdeaFormModal({ idea, onClose, onSave, isSaving }) {
         <div className="p-6 grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
-            <textarea value={form.description} onChange={set("description")} rows={3} className="input-base resize-none text-sm" placeholder="Describe the business idea..." />
+            <textarea value={form.description} onChange={set("description")} rows={3} className="input-base resize-none text-sm" placeholder={PLACEHOLDERS.businessIdea} />
           </div>
 
           {FIELDS.map(({ key, label, type, full, options }) => (
@@ -302,7 +303,7 @@ function IdeasTab() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search ideas..." className="input-base pl-9 text-sm" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={PLACEHOLDERS.searchIdeas} className="input-base pl-9 text-sm" />
         </div>
         <button onClick={() => setEditTarget("new")} className="btn-primary text-sm shrink-0">
           <Plus className="w-4 h-4" /> Add New Idea
@@ -414,7 +415,7 @@ function UsersTab() {
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." className="input-base pl-9 text-sm" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={PLACEHOLDERS.searchUsers} className="input-base pl-9 text-sm" />
         </div>
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="input-base text-sm w-40">
           <option value="">All roles</option>
@@ -530,7 +531,7 @@ function PlansTab() {
     <div>
       <div className="relative max-w-xs mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search plans..." className="input-base pl-9 text-sm" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={PLACEHOLDERS.searchPlans} className="input-base pl-9 text-sm" />
       </div>
 
       {isLoading ? (

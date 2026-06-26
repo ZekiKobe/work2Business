@@ -1,5 +1,6 @@
 import axios from "axios";
 import toast from "react-hot-toast";
+import { clearUserQueryCache } from "../lib/queryClient";
 
 const api = axios.create({
   baseURL: "/api/v1",
@@ -21,6 +22,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      clearUserQueryCache();
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       // Redirect to login if not already there

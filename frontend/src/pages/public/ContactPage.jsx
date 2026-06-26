@@ -2,6 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Mail, MapPin, MessageSquare, Send } from "lucide-react";
 import PublicPageLayout from "../../layouts/PublicPageLayout";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
@@ -53,20 +54,20 @@ export default function ContactPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Name</label>
-                <input value={form.name} onChange={set("name")} className="input-base text-sm" placeholder="Your name" />
+                <input value={form.name} onChange={set("name")} className="input-base text-sm" placeholder={PLACEHOLDERS.contactName} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
-                <input type="email" value={form.email} onChange={set("email")} className="input-base text-sm" placeholder="you@email.com" />
+                <input type="email" value={form.email} onChange={set("email")} className="input-base text-sm" placeholder={PLACEHOLDERS.email} />
               </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Subject</label>
-              <input value={form.subject} onChange={set("subject")} className="input-base text-sm" placeholder="How can we help?" />
+              <input value={form.subject} onChange={set("subject")} className="input-base text-sm" placeholder={PLACEHOLDERS.contactSubject} />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Message</label>
-              <textarea value={form.message} onChange={set("message")} rows={5} className="input-base text-sm resize-none" placeholder="Tell us more..." />
+              <textarea value={form.message} onChange={set("message")} rows={5} className="input-base text-sm resize-none" placeholder={PLACEHOLDERS.contactMessage} />
             </div>
             <button type="submit" className="btn-primary text-sm">
               <Send className="w-4 h-4" /> Send message

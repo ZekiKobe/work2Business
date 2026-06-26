@@ -11,6 +11,7 @@ import EmptyState from "../../components/common/EmptyState";
 import { SkeletonCard } from "../../components/common/Skeleton";
 import { PlanCard } from "./plans";
 import api from "../../api/axios";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function FavoritePlans() {
   const queryClient = useQueryClient();
@@ -71,7 +72,7 @@ export default function FavoritePlans() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search favorite plans..."
+          placeholder={PLACEHOLDERS.searchPlans}
           className="input-base pl-10"
         />
       </div>

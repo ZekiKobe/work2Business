@@ -10,6 +10,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
@@ -74,7 +75,7 @@ function AccountTab() {
                 type={show[showKey] ? "text" : "password"}
                 value={form[key]}
                 onChange={set(key)}
-                placeholder="••••••••"
+                placeholder={PLACEHOLDERS.password}
                 className="input-base pr-10 text-sm"
                 autoComplete={key === "currentPassword" ? "current-password" : "new-password"}
               />

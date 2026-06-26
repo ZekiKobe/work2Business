@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
+import { clearUserQueryCache } from "../lib/queryClient";
 
 export const AuthContext = createContext(null);
 
@@ -19,7 +20,7 @@ export default function AuthProvider({ children }) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       }
     } catch {
-      // Token expired or invalid -clear session
+      clearUserQueryCache();
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       setUser(null);
@@ -61,6 +62,7 @@ export default function AuthProvider({ children }) {
   }, [fetchFullProfile]);
 
   const login = (data) => {
+    clearUserQueryCache();
     if (data?.token) {
       localStorage.setItem("token", data.token);
     }
@@ -71,6 +73,7 @@ export default function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    clearUserQueryCache();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);

@@ -13,6 +13,7 @@ import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { SkeletonCard } from "../../components/common/Skeleton";
 import api from "../../api/axios";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 function PlanCard({ plan, onDelete, isDeleting, view, onToggleFavorite }) {
   const idea = plan.businessIdea;
@@ -207,7 +208,7 @@ export default function Plans() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search plans by name, category..."
+          placeholder={PLACEHOLDERS.searchPlans}
           className="input-base pl-10"
         />
       </div>

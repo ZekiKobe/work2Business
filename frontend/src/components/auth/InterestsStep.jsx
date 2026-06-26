@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, X, CheckCircle2 } from "lucide-react";
 import { INTERESTS } from "../../constants/interests";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function InterestsStep({ formData, setFormData }) {
   const [search, setSearch] = useState("");
@@ -24,7 +25,7 @@ export default function InterestsStep({ formData, setFormData }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search business sectors..."
+          placeholder={PLACEHOLDERS.searchInterests}
           className="input-base pl-10"
         />
       </div>

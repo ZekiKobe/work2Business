@@ -14,6 +14,7 @@ import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { SKILLS } from "../../constants/skills";
 import { INTERESTS } from "../../constants/interests";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 function TagSelector({ selected, options, onChange, colorClass, placeholder }) {
   const [search, setSearch] = useState("");
@@ -45,7 +46,7 @@ function TagSelector({ selected, options, onChange, colorClass, placeholder }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search to add..."
+          placeholder={PLACEHOLDERS.tagSearch}
           className="input-base pl-9 text-xs py-2"
         />
       </div>
@@ -210,11 +211,11 @@ export default function Profile() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">Profession</label>
-                  <input value={form.profession} onChange={set("profession")} placeholder="e.g. Software Engineer" className="input-base text-sm" />
+                  <input value={form.profession} onChange={set("profession")} placeholder={PLACEHOLDERS.profession} className="input-base text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">Employer</label>
-                  <input value={form.employer} onChange={set("employer")} placeholder="e.g. Tech Corp" className="input-base text-sm" />
+                  <input value={form.employer} onChange={set("employer")} placeholder={PLACEHOLDERS.employer} className="input-base text-sm" />
                 </div>
               </div>
             </div>
@@ -230,15 +231,15 @@ export default function Profile() {
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">Monthly Salary (ETB)</label>
-                  <input type="number" min="0" value={form.monthlySalary} onChange={set("monthlySalary")} className="input-base text-sm" />
+                  <input type="number" min="0" value={form.monthlySalary} onChange={set("monthlySalary")} placeholder={PLACEHOLDERS.monthlySalary} className="input-base text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">Available Capital (ETB)</label>
-                  <input type="number" min="0" value={form.availableCapital} onChange={set("availableCapital")} className="input-base text-sm" />
+                  <input type="number" min="0" value={form.availableCapital} onChange={set("availableCapital")} placeholder={PLACEHOLDERS.availableCapital} className="input-base text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">Hours/Week Available</label>
-                  <input type="number" min="0" max="80" value={form.availableHoursPerWeek} onChange={set("availableHoursPerWeek")} className="input-base text-sm" />
+                  <input type="number" min="0" max="80" value={form.availableHoursPerWeek} onChange={set("availableHoursPerWeek")} placeholder={PLACEHOLDERS.hoursPerWeek} className="input-base text-sm" />
                 </div>
               </div>
             </div>

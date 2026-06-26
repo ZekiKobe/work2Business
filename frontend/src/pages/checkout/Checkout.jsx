@@ -12,12 +12,16 @@ import {
   ArrowLeft,
   Loader2,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  LayoutDashboard,
+  Receipt
 } from "lucide-react";
 
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { PLANS } from "../../constants/plans";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 const METHODS = [
   { id: "chapa", label: "Chapa", icon: Wallet, desc: "Cards, Telebirr, mobile money" },
@@ -25,18 +29,44 @@ const METHODS = [
   { id: "telebirr", label: "Telebirr", icon: Smartphone, desc: "USSD prompt to your phone" }
 ];
 
+const getTxRefFromParams = (searchParams) =>
+  searchParams.get("tx_ref") ||
+  searchParams.get("trx_ref") ||
+  searchParams.get("trxref") ||
+  searchParams.get("reference");
+
+const PENDING_TX_KEY = "w2b_pending_checkout_tx";
+
+const isChapaReturn = (searchParams) =>
+  searchParams.get("payment_return") === "1" ||
+  ["success", "successful"].includes(String(searchParams.get("status") || "").toLowerCase()) ||
+  Boolean(getTxRefFromParams(searchParams));
+
 export default function Checkout() {
   const { user, updateUser, refreshProfile } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const planId = searchParams.get("plan") || "founder";
-  const txRefFromUrl = searchParams.get("tx_ref");
+  const returningFromChapa = isChapaReturn(searchParams);
 
   const plan = PLANS[planId] || PLANS.founder;
   const [method, setMethod] = useState("chapa");
-  const [telebirrPhone, setTelebirrPhone] = useState("");
+  const [checkoutPhone, setCheckoutPhone] = useState("");
   const [awaitingTxRef, setAwaitingTxRef] = useState(null);
+  const [activeTxRef, setActiveTxRef] = useState(null);
+  const [paymentPhase, setPaymentPhase] = useState(() => {
+    if (
+      getTxRefFromParams(searchParams) ||
+      isChapaReturn(searchParams) ||
+      sessionStorage.getItem(PENDING_TX_KEY)
+    ) {
+      return "resolving";
+    }
+    return "idle";
+  });
+  const [verifyError, setVerifyError] = useState("");
   const pollRef = useRef(null);
+  const verifyCompletedRef = useRef(false);
 
   const sub = user?.subscription;
   const alreadyActive = sub?.plan === "founder" && sub?.status === "active";
@@ -47,9 +77,9 @@ export default function Checkout() {
   });
 
   const { data: billingData } = useQuery({
-    queryKey: ["billing-details"],
+    queryKey: ["billing-details", user?._id],
     queryFn: () => api.get("/payments/billing-details").then((r) => r.data.data),
-    enabled: !!user
+    enabled: !!user?._id
   });
 
   const billing = billingData?.billingDetails || {};
@@ -57,69 +87,168 @@ export default function Checkout() {
   const defaultPhone = billing.phone || "";
 
   useEffect(() => {
-    if (defaultPhone && !telebirrPhone) setTelebirrPhone(defaultPhone);
-  }, [defaultPhone, telebirrPhone]);
+    if (defaultPhone && !checkoutPhone) setCheckoutPhone(defaultPhone);
+  }, [defaultPhone, checkoutPhone]);
 
   useEffect(() => {
-    if (alreadyActive) {
+    if (alreadyActive && !activeTxRef && !returningFromChapa && paymentPhase === "idle") {
       navigate("/billing", { replace: true });
     }
-  }, [alreadyActive, navigate]);
+  }, [alreadyActive, navigate, activeTxRef, returningFromChapa, paymentPhase]);
 
   useEffect(() => () => {
     if (pollRef.current) clearInterval(pollRef.current);
   }, []);
 
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
   const handlePaymentSuccess = async (subscription) => {
+    verifyCompletedRef.current = true;
+    stopPolling();
+    setAwaitingTxRef(null);
+    setPaymentPhase("success");
+    setVerifyError("");
+
     if (subscription) {
       updateUser({ ...user, subscription });
     } else {
       await refreshProfile();
     }
+
+    sessionStorage.removeItem(PENDING_TX_KEY);
+    setSearchParams({ plan: planId }, { replace: true });
     toast.success("Payment confirmed! Welcome to Founder.");
-    navigate("/billing?success=1");
   };
 
   const verifyMutation = useMutation({
-    mutationFn: (txRef) => api.get(`/payments/verify/${txRef}`),
+    mutationFn: (txRef) => api.get(`/payments/verify/${encodeURIComponent(txRef)}`),
     onSuccess: async (res) => {
       if (res.data.status === "completed") {
-        if (pollRef.current) clearInterval(pollRef.current);
-        setAwaitingTxRef(null);
         await handlePaymentSuccess(res.data.subscription);
       } else if (res.data.status === "pending") {
-        // keep polling for telebirr
+        setPaymentPhase("verifying");
       }
     },
     onError: (err) => {
-      if (pollRef.current) clearInterval(pollRef.current);
-      setAwaitingTxRef(null);
-      toast.error(err.response?.data?.message || "Payment verification failed");
+      if (verifyCompletedRef.current) return;
+
+      const status = err.response?.data?.status;
+      if (status === "failed") {
+        stopPolling();
+        setAwaitingTxRef(null);
+        setPaymentPhase("failed");
+        setVerifyError(err.response?.data?.message || "Payment was not completed.");
+        return;
+      }
+
+      setPaymentPhase("verifying");
     }
   });
 
+  const runVerify = (txRef) => {
+    if (!txRef || verifyCompletedRef.current) return;
+    verifyMutation.mutate(txRef);
+  };
+
   useEffect(() => {
-    if (txRefFromUrl) {
-      verifyMutation.mutate(txRefFromUrl);
-    }
-  }, [txRefFromUrl]);
+    if (!user?._id) return;
+
+    let cancelled = false;
+
+    const resolveTxRef = async () => {
+      const fromUrl = getTxRefFromParams(searchParams);
+      if (fromUrl) {
+        if (!cancelled) {
+          setActiveTxRef(fromUrl);
+          sessionStorage.setItem(PENDING_TX_KEY, fromUrl);
+          setPaymentPhase("verifying");
+        }
+        return;
+      }
+
+      const fromStorage = sessionStorage.getItem(PENDING_TX_KEY);
+      if (fromStorage) {
+        if (!cancelled) {
+          setActiveTxRef(fromStorage);
+          setPaymentPhase("verifying");
+        }
+        return;
+      }
+
+      if (returningFromChapa) {
+        try {
+          const res = await api.get("/payments/pending-checkout");
+          const txRef = res.data?.data?.txRef;
+          if (txRef && !cancelled) {
+            setActiveTxRef(txRef);
+            sessionStorage.setItem(PENDING_TX_KEY, txRef);
+            setPaymentPhase("verifying");
+          } else if (!cancelled) {
+            sessionStorage.removeItem(PENDING_TX_KEY);
+            setPaymentPhase("idle");
+          }
+        } catch {
+          if (!cancelled) setPaymentPhase("idle");
+        }
+      }
+    };
+
+    resolveTxRef();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?._id, searchParams, returningFromChapa]);
+
+  useEffect(() => {
+    if (!activeTxRef || verifyCompletedRef.current) return;
+
+    verifyCompletedRef.current = false;
+    setPaymentPhase("verifying");
+    setVerifyError("");
+    runVerify(activeTxRef);
+
+    stopPolling();
+    pollRef.current = setInterval(() => runVerify(activeTxRef), 4000);
+
+    const timeout = setTimeout(() => {
+      if (!verifyCompletedRef.current) {
+        stopPolling();
+        setPaymentPhase("pending_timeout");
+      }
+    }, 120000);
+
+    return () => {
+      stopPolling();
+      clearTimeout(timeout);
+    };
+  }, [activeTxRef]);
 
   const startPolling = (txRef) => {
     setAwaitingTxRef(txRef);
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(() => {
-      verifyMutation.mutate(txRef);
-    }, 4000);
+    setPaymentPhase("verifying");
+    verifyCompletedRef.current = false;
+    stopPolling();
+    runVerify(txRef);
+    pollRef.current = setInterval(() => runVerify(txRef), 4000);
   };
 
   const payMutation = useMutation({
     mutationFn: (payload) => api.post("/payments/initiate", payload),
     onSuccess: (res) => {
       if (res.data.redirect && res.data.checkoutUrl) {
+        if (res.data.txRef) {
+          sessionStorage.setItem(PENDING_TX_KEY, res.data.txRef);
+        }
         window.location.href = res.data.checkoutUrl;
         return;
       }
       if (res.data.awaitingConfirmation && res.data.txRef) {
+        sessionStorage.setItem(PENDING_TX_KEY, res.data.txRef);
         toast.success(res.data.message || "Check your phone to approve the payment.");
         startPolling(res.data.txRef);
         return;
@@ -133,46 +262,130 @@ export default function Checkout() {
 
   const handlePay = () => {
     const payload = { method, plan: planId };
-    if (method === "telebirr") {
-      payload.phone = telebirrPhone.trim();
-      if (!payload.phone) {
-        toast.error("Enter your Telebirr phone number");
-        return;
-      }
+    payload.phone = checkoutPhone.trim() || defaultPhone.trim();
+    if (!payload.phone) {
+      toast.error("Enter your phone number (required for Chapa)");
+      return;
     }
     payMutation.mutate(payload);
   };
 
   const paymentsReady = paymentConfig?.configured;
 
-  if (txRefFromUrl && verifyMutation.isPending && !awaitingTxRef) {
+  if (paymentPhase === "success") {
     return (
-      <div className="min-h-screen bg-[#080d1a] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-indigo-400 animate-spin mx-auto mb-4" />
-          <p className="text-white font-medium">Confirming your payment with Chapa...</p>
+      <div className="min-h-screen bg-[#080d1a] flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-lg w-full glass rounded-2xl p-8 text-center border border-emerald-500/20"
+        >
+          <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="w-9 h-9 text-emerald-400" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-medium mb-4">
+            <Sparkles className="w-3.5 h-3.5" />
+            Founder plan activated
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Payment successful</h1>
+          <p className="text-slate-400 text-sm mb-2">
+            Thank you! Your {plan.name} subscription is now active for one year.
+          </p>
+          <p className="text-slate-500 text-xs mb-8">
+            A receipt and invoice are available on your billing page.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Go to dashboard
+            </Link>
+            <Link
+              to="/billing"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold transition-colors border border-slate-700"
+            >
+              <Receipt className="w-4 h-4" />
+              View billing & invoice
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (paymentPhase === "failed") {
+    return (
+      <div className="min-h-screen bg-[#080d1a] flex items-center justify-center px-4">
+        <div className="max-w-md w-full glass rounded-2xl p-8 text-center border border-red-500/20">
+          <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-4" />
+          <h1 className="text-lg font-bold text-white mb-2">Payment not completed</h1>
+          <p className="text-sm text-slate-400 mb-6">{verifyError || "Your payment was cancelled or could not be verified."}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setPaymentPhase("idle");
+              setVerifyError("");
+              setSearchParams({ plan: planId }, { replace: true });
+            }}
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold"
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
   }
 
-  if (awaitingTxRef) {
+  if (paymentPhase === "resolving" || (paymentPhase === "verifying" && !verifyCompletedRef.current)) {
     return (
       <div className="min-h-screen bg-[#080d1a] flex items-center justify-center px-4">
         <div className="max-w-md w-full glass rounded-2xl p-8 text-center">
           <Loader2 className="w-10 h-10 text-indigo-400 animate-spin mx-auto mb-4" />
-          <h1 className="text-lg font-bold text-white mb-2">Waiting for Telebirr approval</h1>
+          <h1 className="text-lg font-bold text-white mb-2">
+            {paymentPhase === "resolving" ? "Loading payment status" : "Confirming your payment"}
+          </h1>
           <p className="text-sm text-slate-400 mb-4">
-            Approve the USSD prompt on your phone. This page will update automatically once Chapa confirms payment.
+            {awaitingTxRef
+              ? "Approve the USSD prompt on your phone. This page will update automatically."
+              : "We are verifying your payment with Chapa. Please wait a moment..."}
           </p>
-          <p className="text-xs text-slate-600 font-mono mb-6">{awaitingTxRef}</p>
-          <button
-            type="button"
-            onClick={() => verifyMutation.mutate(awaitingTxRef)}
-            className="text-sm text-indigo-400 hover:text-indigo-300"
-          >
-            Check status now
-          </button>
+          {(activeTxRef || awaitingTxRef) && paymentPhase !== "resolving" && (
+            <button
+              type="button"
+              onClick={() => runVerify(activeTxRef || awaitingTxRef)}
+              className="text-sm text-indigo-400 hover:text-indigo-300"
+            >
+              Check status now
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentPhase === "pending_timeout") {
+    return (
+      <div className="min-h-screen bg-[#080d1a] flex items-center justify-center px-4">
+        <div className="max-w-md w-full glass rounded-2xl p-8 text-center">
+          <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-4" />
+          <h1 className="text-lg font-bold text-white mb-2">Still waiting for confirmation</h1>
+          <p className="text-sm text-slate-400 mb-6">
+            Payment can take a minute to confirm. If you already paid, check your billing page or try again below.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => runVerify(activeTxRef || sessionStorage.getItem(PENDING_TX_KEY))}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold"
+            >
+              Check payment status
+            </button>
+            <Link to="/billing" className="text-sm text-indigo-400 hover:text-indigo-300">
+              Go to billing
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -290,29 +503,29 @@ export default function Checkout() {
               ))}
             </div>
 
+            <div className="space-y-4 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
+              <p className="text-sm text-slate-400">
+                {method === "telebirr"
+                  ? "Enter your Telebirr phone number. Chapa will send a USSD prompt — approve it to complete payment."
+                  : "Enter your Ethiopian phone number. Chapa requires this for payment verification."}
+              </p>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5">Phone number</label>
+                <input
+                  value={checkoutPhone}
+                  onChange={(e) => setCheckoutPhone(e.target.value)}
+                  className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  placeholder={PLACEHOLDERS.phone}
+                />
+              </div>
+            </div>
+
             {(method === "chapa" || method === "card") && (
-              <p className="text-sm text-slate-400 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
+              <p className="text-sm text-slate-400 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50 -mt-2">
                 {method === "card"
                   ? "You will be redirected to Chapa's secure checkout to pay with Visa or Mastercard."
                   : "You will be redirected to Chapa to pay with card, Telebirr, or other supported methods."}
               </p>
-            )}
-
-            {method === "telebirr" && (
-              <div className="space-y-4 mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                <p className="text-sm text-slate-400">
-                  Enter your Telebirr phone number. Chapa will send a USSD prompt — approve it to complete payment.
-                </p>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5">Telebirr phone number</label>
-                  <input
-                    value={telebirrPhone}
-                    onChange={(e) => setTelebirrPhone(e.target.value)}
-                    className="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                    placeholder="0912345678"
-                  />
-                </div>
-              </div>
             )}
 
             <button

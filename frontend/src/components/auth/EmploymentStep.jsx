@@ -1,4 +1,5 @@
 import { Briefcase, Building } from "lucide-react";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function EmploymentStep({ formData, setFormData }) {
   const set = (key) => (e) => setFormData({ ...formData, [key]: e.target.value });
@@ -12,7 +13,7 @@ export default function EmploymentStep({ formData, setFormData }) {
           <input
             value={formData.profession}
             onChange={set("profession")}
-            placeholder="e.g. Software Engineer, Accountant, HR Manager"
+            placeholder={PLACEHOLDERS.profession}
             className="input-base pl-10"
           />
         </div>
@@ -26,7 +27,7 @@ export default function EmploymentStep({ formData, setFormData }) {
           <input
             value={formData.employer}
             onChange={set("employer")}
-            placeholder="e.g. Tech Corp, Ethiopian Airlines, Self-employed"
+            placeholder={PLACEHOLDERS.employer}
             className="input-base pl-10"
           />
         </div>

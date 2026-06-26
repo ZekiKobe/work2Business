@@ -26,6 +26,27 @@ exports.getPaymentConfig = async (req, res) => {
   });
 };
 
+exports.getPendingCheckout = async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    const payment = await Payment.findOne({
+      user: req.user._id,
+      status: "pending",
+      createdAt: { $gte: since }
+    })
+      .sort({ createdAt: -1 })
+      .select("txRef status createdAt");
+
+    res.json({
+      success: true,
+      data: payment ? { txRef: payment.txRef } : null
+    });
+  } catch (error) {
+    console.error("Pending checkout error:", error);
+    res.status(500).json({ success: false, message: "Could not load pending payment" });
+  }
+};
+
 exports.getSubscription = async (req, res) => {
   const user = await User.findById(req.user._id);
   await syncSubscriptionStatus(user);
@@ -57,6 +78,7 @@ exports.updateBillingDetails = async (req, res) => {
       }
     });
 
+    user.markModified("billingDetails");
     await user.save();
     res.json({
       success: true,
@@ -125,13 +147,18 @@ exports.cancelSubscription = async (req, res) => {
     const user = await User.findById(req.user._id);
     await syncSubscriptionStatus(user);
 
-    const sub = user.subscription;
-    if (sub?.plan !== "founder" || sub?.status !== "active") {
+    const sub = user.subscription || {};
+    if (sub.plan !== "founder" || sub.status !== "active") {
       return res.status(400).json({ success: false, message: "No active Founder subscription to cancel" });
     }
 
-    sub.cancelAtPeriodEnd = true;
-    sub.cancelledAt = new Date();
+    const subObj = sub.toObject?.() ?? { ...sub };
+    user.subscription = {
+      ...subObj,
+      cancelAtPeriodEnd: true,
+      cancelledAt: new Date()
+    };
+    user.markModified("subscription");
     await user.save();
 
     res.json({
@@ -140,6 +167,7 @@ exports.cancelSubscription = async (req, res) => {
       data: buildSubscriptionResponse(user)
     });
   } catch (error) {
+    console.error("Cancel subscription error:", error);
     res.status(500).json({ success: false, message: "Failed to cancel subscription" });
   }
 };
@@ -149,8 +177,8 @@ exports.reactivateSubscription = async (req, res) => {
     const user = await User.findById(req.user._id);
     await syncSubscriptionStatus(user);
 
-    const sub = user.subscription;
-    if (sub?.plan !== "founder" || sub?.status !== "active") {
+    const sub = user.subscription || {};
+    if (sub.plan !== "founder" || sub.status !== "active") {
       return res.status(400).json({ success: false, message: "No active Founder subscription to reactivate" });
     }
 
@@ -158,8 +186,13 @@ exports.reactivateSubscription = async (req, res) => {
       return res.status(400).json({ success: false, message: "Subscription is not scheduled for cancellation" });
     }
 
-    sub.cancelAtPeriodEnd = false;
-    sub.cancelledAt = undefined;
+    const subObj = sub.toObject?.() ?? { ...sub };
+    user.subscription = {
+      ...subObj,
+      cancelAtPeriodEnd: false,
+      cancelledAt: null
+    };
+    user.markModified("subscription");
     await user.save();
 
     res.json({
@@ -168,6 +201,7 @@ exports.reactivateSubscription = async (req, res) => {
       data: buildSubscriptionResponse(user)
     });
   } catch (error) {
+    console.error("Reactivate subscription error:", error);
     res.status(500).json({ success: false, message: "Failed to reactivate subscription" });
   }
 };
@@ -193,12 +227,12 @@ exports.initiatePayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "You already have an active Founder plan" });
     }
 
-    if (method === "telebirr") {
-      const telebirrPhone = phone || user.billingDetails?.phone;
-      if (!telebirrPhone) {
+    if (method === "telebirr" || method === "card" || method === "chapa") {
+      const checkoutPhone = phone || user.billingDetails?.phone;
+      if (!checkoutPhone) {
         return res.status(400).json({
           success: false,
-          message: "Phone number is required for Telebirr. Add it in Billing or enter it below."
+          message: "Phone number is required. Add it in Billing or enter it at checkout."
         });
       }
     }
@@ -225,8 +259,9 @@ exports.initiatePayment = async (req, res) => {
 
     res.status(500).json({ success: false, message: "Could not initiate payment" });
   } catch (error) {
-    console.error("Initiate payment error:", error);
-    res.status(500).json({ success: false, message: error.message || "Payment failed" });
+    console.error("Initiate payment error:", error.message, error.details ? JSON.stringify(error.details) : "");
+    const status = error.statusCode || 500;
+    res.status(status).json({ success: false, message: error.message || "Payment failed" });
   }
 };
 
@@ -289,7 +324,12 @@ exports.verifyPayment = async (req, res) => {
 
 exports.chapaWebhook = async (req, res) => {
   try {
-    const txRef = req.body?.tx_ref;
+    const txRef =
+      req.body?.tx_ref ||
+      req.body?.trx_ref ||
+      req.query?.tx_ref ||
+      req.query?.trx_ref;
+
     if (!txRef) {
       return res.status(200).send("OK");
     }

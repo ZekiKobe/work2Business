@@ -66,6 +66,7 @@ exports.activateFounderPlan = async (user, method) => {
     cancelledAt: undefined
   };
 
+  user.markModified("subscription");
   await user.save();
   return user;
 };
@@ -110,7 +111,7 @@ exports.initiatePayment = async (user, method, { phone } = {}) => {
   const result = await chapaService.initializeCheckout(user, {
     txRef,
     amount: plan.price,
-    title: "Work2Business Founder"
+    phone
   });
 
   payment.providerRef = result.reference;

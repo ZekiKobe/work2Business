@@ -1,11 +1,11 @@
+import { PLACEHOLDERS } from "../../constants/placeholders";
+
 export default function RecommendationFilters({
   filters,
   setFilters
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-      {/* RISK SELECTOR */}
       <select
         className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-xs font-semibold uppercase tracking-wide text-slate-300 transition-all cursor-pointer"
         value={filters.risk}
@@ -25,8 +25,8 @@ export default function RecommendationFilters({
       {/* MAX CAPITAL */}
       <input
         type="number"
-        placeholder="MAX CAPITAL"
-        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-xs font-semibold tracking-wide text-slate-200 placeholder-slate-600 transition-all"
+        placeholder={PLACEHOLDERS.maxCapital}
+        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 placeholder-slate-500 transition-all"
         value={filters.maxCapital}
         onChange={(e) =>
           setFilters({
@@ -39,8 +39,8 @@ export default function RecommendationFilters({
       {/* CATEGORY ENTRY */}
       <input
         type="text"
-        placeholder="CATEGORY SEARCH"
-        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-xs font-semibold tracking-wide text-slate-200 placeholder-slate-600 transition-all"
+        placeholder={PLACEHOLDERS.searchCategory}
+        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-blue-500/10 text-sm text-slate-200 placeholder-slate-500 transition-all"
         value={filters.category}
         onChange={(e) =>
           setFilters({

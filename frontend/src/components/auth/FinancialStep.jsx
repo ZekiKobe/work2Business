@@ -1,4 +1,5 @@
 import { DollarSign, Wallet, Clock } from "lucide-react";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function FinancialStep({ formData, setFormData }) {
   const set = (key) => (e) => setFormData({ ...formData, [key]: e.target.value });
@@ -14,7 +15,7 @@ export default function FinancialStep({ formData, setFormData }) {
             min="0"
             value={formData.monthlySalary}
             onChange={set("monthlySalary")}
-            placeholder="e.g. 15000"
+            placeholder={PLACEHOLDERS.monthlySalary}
             className="input-base pl-10"
           />
         </div>
@@ -30,7 +31,7 @@ export default function FinancialStep({ formData, setFormData }) {
             min="0"
             value={formData.availableCapital}
             onChange={set("availableCapital")}
-            placeholder="e.g. 50000"
+            placeholder={PLACEHOLDERS.availableCapital}
             className="input-base pl-10"
           />
         </div>
@@ -47,7 +48,7 @@ export default function FinancialStep({ formData, setFormData }) {
             max="80"
             value={formData.availableHoursPerWeek}
             onChange={set("availableHoursPerWeek")}
-            placeholder="e.g. 20"
+            placeholder={PLACEHOLDERS.hoursPerWeek}
             className="input-base pl-10"
           />
         </div>

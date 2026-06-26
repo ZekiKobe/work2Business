@@ -2,11 +2,10 @@ import { useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   CreditCard, Zap, Download, Loader2, AlertTriangle,
-  RefreshCw, ArrowRight
+  RefreshCw, ArrowRight, CheckCircle2
 } from "lucide-react";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -15,6 +14,7 @@ import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { PLANS } from "../../constants/plans";
 import { downloadInvoicePdf } from "../../components/billing/InvoicePdf";
+import { BILLING_PLACEHOLDERS } from "../../constants/placeholders";
 
 const EMPTY_BILLING = {
   fullName: "", company: "", phone: "",
@@ -34,58 +34,71 @@ function formatMethod(m) {
 
 export default function Billing() {
   const { user, updateUser, refreshProfile } = useContext(AuthContext);
+  const userId = user?._id;
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [billingForm, setBillingForm] = useState(EMPTY_BILLING);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
 
   const { data: subData, isLoading: subLoading } = useQuery({
-    queryKey: ["subscription"],
-    queryFn: () => api.get("/payments/subscription").then((r) => r.data.data)
+    queryKey: ["subscription", userId],
+    queryFn: () => api.get("/payments/subscription").then((r) => r.data.data),
+    enabled: !!userId
   });
 
   const { data: billingData } = useQuery({
-    queryKey: ["billing-details"],
-    queryFn: () => api.get("/payments/billing-details").then((r) => r.data.data)
+    queryKey: ["billing-details", userId],
+    queryFn: () => api.get("/payments/billing-details").then((r) => r.data.data),
+    enabled: !!userId
   });
 
   const { data: history = [], isLoading: historyLoading } = useQuery({
-    queryKey: ["payment-history"],
-    queryFn: () => api.get("/payments/history", { params: { limit: 20 } }).then((r) => r.data.data)
+    queryKey: ["payment-history", userId],
+    queryFn: () => api.get("/payments/history", { params: { limit: 20 } }).then((r) => r.data.data),
+    enabled: !!userId
   });
 
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
-    queryKey: ["invoices"],
-    queryFn: () => api.get("/payments/invoices").then((r) => r.data.data)
+    queryKey: ["invoices", userId],
+    queryFn: () => api.get("/payments/invoices").then((r) => r.data.data),
+    enabled: !!userId
   });
 
   useEffect(() => {
-    if (billingData?.billingDetails) {
+    setBillingForm(EMPTY_BILLING);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    if (billingData?.billingDetails && Object.values(billingData.billingDetails).some(Boolean)) {
       setBillingForm({ ...EMPTY_BILLING, ...billingData.billingDetails });
     } else if (user) {
-      setBillingForm((f) => ({
-        ...f,
-        fullName: f.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim()
-      }));
+      setBillingForm({
+        ...EMPTY_BILLING,
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim()
+      });
     }
-  }, [billingData, user]);
+  }, [billingData, user, userId]);
 
   useEffect(() => {
     if (searchParams.get("success") === "1") {
+      setShowPaymentSuccess(true);
       toast.success("Payment successful! Your Founder plan is now active.");
       refreshProfile();
-      queryClient.invalidateQueries(["subscription"]);
-      queryClient.invalidateQueries(["invoices"]);
-      queryClient.invalidateQueries(["payment-history"]);
+      queryClient.invalidateQueries({ queryKey: ["subscription", userId] });
+      queryClient.invalidateQueries({ queryKey: ["invoices", userId] });
+      queryClient.invalidateQueries({ queryKey: ["payment-history", userId] });
       setSearchParams({}, { replace: true });
     }
-  }, [searchParams, setSearchParams, refreshProfile, queryClient]);
+  }, [searchParams, setSearchParams, refreshProfile, queryClient, userId]);
 
   const saveBilling = useMutation({
     mutationFn: (payload) => api.put("/payments/billing-details", payload),
     onSuccess: () => {
       toast.success("Billing details saved");
-      queryClient.invalidateQueries(["billing-details"]);
+      queryClient.invalidateQueries({ queryKey: ["billing-details", userId] });
     },
     onError: () => toast.error("Failed to save billing details")
   });
@@ -93,8 +106,10 @@ export default function Billing() {
   const cancelSub = useMutation({
     mutationFn: () => api.post("/payments/cancel"),
     onSuccess: (res) => {
-      updateUser({ ...user, subscription: res.data.data });
-      queryClient.invalidateQueries(["subscription"]);
+      const updated = res.data.data;
+      queryClient.setQueryData(["subscription", userId], updated);
+      updateUser({ ...user, subscription: updated });
+      queryClient.invalidateQueries({ queryKey: ["subscription", userId] });
       toast.success("Subscription will cancel at end of billing period");
       setShowCancelConfirm(false);
     },
@@ -104,8 +119,10 @@ export default function Billing() {
   const reactivateSub = useMutation({
     mutationFn: () => api.post("/payments/reactivate"),
     onSuccess: (res) => {
-      updateUser({ ...user, subscription: res.data.data });
-      queryClient.invalidateQueries(["subscription"]);
+      const updated = res.data.data;
+      queryClient.setQueryData(["subscription", userId], updated);
+      updateUser({ ...user, subscription: updated });
+      queryClient.invalidateQueries({ queryKey: ["subscription", userId] });
       toast.success("Subscription reactivated");
     },
     onError: (err) => toast.error(err.response?.data?.message || "Failed to reactivate")
@@ -128,6 +145,18 @@ export default function Billing() {
       />
 
       <div className="space-y-6 max-w-4xl">
+        {showPaymentSuccess && (
+          <div className="rounded-2xl p-5 bg-emerald-500/10 border border-emerald-500/25 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-emerald-200 font-semibold">Payment successful</p>
+              <p className="text-sm text-emerald-200/80 mt-1">
+                Your Founder plan is active. Your invoice is listed below.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Subscription */}
         <section className="glass rounded-2xl p-6">
           <h2 className="text-base font-bold text-white mb-4">Current plan</h2>
@@ -223,7 +252,7 @@ export default function Billing() {
             ].map(({ key, label, span }) => (
               <div key={key} className={span === 2 ? "sm:col-span-2" : ""}>
                 <label className="block text-xs text-slate-400 mb-1.5">{label}</label>
-                <input value={billingForm[key]} onChange={setField(key)} className="input-base text-sm" />
+                <input value={billingForm[key]} onChange={setField(key)} placeholder={BILLING_PLACEHOLDERS[key] || ""} className="input-base text-sm" />
               </div>
             ))}
             <div className="sm:col-span-2">
@@ -302,26 +331,23 @@ export default function Billing() {
         </section>
       </div>
 
-      <AnimatePresence>
-        {showCancelConfirm && createPortal(
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      {createPortal(
+        showCancelConfirm ? (
+          <div
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
             onClick={() => setShowCancelConfirm(false)}
           >
-            <motion.div
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0 }}
+            <div
               className="bg-[#0d1425] border border-slate-700/80 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cancel-subscription-title"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-amber-500/10 rounded-lg"><AlertTriangle className="w-5 h-5 text-amber-400" /></div>
                 <div>
-                  <p className="font-bold text-white text-sm">Cancel subscription?</p>
+                  <p id="cancel-subscription-title" className="font-bold text-white text-sm">Cancel subscription?</p>
                   <p className="text-xs text-slate-500 mt-0.5">You keep Founder access until {formatDate(sub.expiresAt)}.</p>
                 </div>
               </div>
@@ -332,11 +358,11 @@ export default function Billing() {
                   {cancelSub.isPending ? "Cancelling..." : "Cancel at period end"}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        ) : null,
+        document.body
+      )}
     </DashboardLayout>
   );
 }

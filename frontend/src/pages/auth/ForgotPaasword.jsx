@@ -9,6 +9,7 @@ import { Building2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 import api from "../../api/axios";
 import { forgotPasswordSchema } from "../../schemas/loginSchema";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
@@ -72,7 +73,7 @@ export default function ForgotPassword() {
                   <input
                     {...register("email")}
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={PLACEHOLDERS.email}
                     className="input-base pl-10"
                     autoComplete="email"
                   />

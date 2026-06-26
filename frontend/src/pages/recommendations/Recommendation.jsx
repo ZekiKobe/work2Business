@@ -13,6 +13,7 @@ import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { SkeletonCard } from "../../components/common/Skeleton";
 import api from "../../api/axios";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 import { showUpgradeToast } from "../../utils/upgradeToast.jsx";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
@@ -904,7 +905,7 @@ export default function Recommendations() {
       <div className="flex gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or category..." className="input-base pl-10 text-sm" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={PLACEHOLDERS.searchByName} className="input-base pl-10 text-sm" />
         </div>
         <select value={sort} onChange={(e) => setSort(e.target.value)} className="input-base w-auto text-sm pr-8">
           <option value="score">Sort: Best Match</option>
@@ -936,7 +937,7 @@ export default function Recommendations() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Max Capital (ETB)</label>
-                <input type="number" placeholder="e.g. 50000" value={filters.maxCapital} onChange={(e) => setFilters({ ...filters, maxCapital: e.target.value })} className="input-base text-sm" />
+                <input type="number" placeholder={PLACEHOLDERS.maxCapital} value={filters.maxCapital} onChange={(e) => setFilters({ ...filters, maxCapital: e.target.value })} className="input-base text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Min Score: {filters.minScore}%</label>

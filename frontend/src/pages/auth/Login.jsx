@@ -10,6 +10,7 @@ import { Building2, Mail, Lock, ArrowRight, ArrowLeft, Sparkles } from "lucide-r
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { loginSchema } from "../../schemas/loginSchema";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -89,7 +90,7 @@ export default function Login() {
                 <input
                   {...register("email")}
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={PLACEHOLDERS.email}
                   className="input-base pl-10"
                   autoComplete="email"
                 />
@@ -112,7 +113,7 @@ export default function Login() {
                 <input
                   {...register("password")}
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={PLACEHOLDERS.password}
                   className="input-base pl-10"
                   autoComplete="current-password"
                 />

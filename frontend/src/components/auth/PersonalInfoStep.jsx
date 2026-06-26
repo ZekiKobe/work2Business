@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function PersonalInfoStep({ formData, setFormData }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,7 +17,7 @@ export default function PersonalInfoStep({ formData, setFormData }) {
             <input
               value={formData.firstName}
               onChange={set("firstName")}
-              placeholder="John"
+              placeholder={PLACEHOLDERS.firstName}
               className="input-base pl-10"
             />
           </div>
@@ -28,7 +29,7 @@ export default function PersonalInfoStep({ formData, setFormData }) {
             <input
               value={formData.lastName}
               onChange={set("lastName")}
-              placeholder="Doe"
+              placeholder={PLACEHOLDERS.lastName}
               className="input-base pl-10"
             />
           </div>
@@ -43,7 +44,7 @@ export default function PersonalInfoStep({ formData, setFormData }) {
             type="email"
             value={formData.email}
             onChange={set("email")}
-            placeholder="you@company.com"
+            placeholder={PLACEHOLDERS.email}
             className="input-base pl-10"
             autoComplete="email"
           />
@@ -58,7 +59,7 @@ export default function PersonalInfoStep({ formData, setFormData }) {
             type={showPassword ? "text" : "password"}
             value={formData.password}
             onChange={set("password")}
-            placeholder="Min. 8 characters"
+            placeholder={PLACEHOLDERS.passwordNew}
             className="input-base pl-10 pr-10"
             autoComplete="new-password"
           />

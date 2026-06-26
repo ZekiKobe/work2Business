@@ -9,6 +9,7 @@ import { Building2, Lock, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-reac
 
 import api from "../../api/axios";
 import { resetPasswordSchema } from "../../schemas/loginSchema";
+import { PLACEHOLDERS } from "../../constants/placeholders";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -75,7 +76,7 @@ export default function ResetPassword() {
                 <input
                   {...register("password")}
                   type={showPassword ? "text" : "password"}
-                  placeholder="Min. 8 characters"
+                  placeholder={PLACEHOLDERS.passwordNew}
                   className="input-base pl-10 pr-10"
                 />
                 <button
@@ -96,7 +97,7 @@ export default function ResetPassword() {
                 <input
                   {...register("confirmPassword")}
                   type={showConfirm ? "text" : "password"}
-                  placeholder="Repeat password"
+                  placeholder={PLACEHOLDERS.passwordConfirm}
                   className="input-base pl-10 pr-10"
                 />
                 <button
